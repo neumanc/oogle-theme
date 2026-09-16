@@ -35,6 +35,10 @@ Not present: `core/grid` as a block (Grid is a Group layout), `core/form`, `core
 11. `image_editor_output_format` is empty by default; the theme converts JPEG → WebP. PNG is deliberately left alone (palette PNG → WebP produced a broken file in the Playground/GD lab).
 12. Global styles output for the neutral theme.json is ~22–24 KB uncompressed (~5 KB gz), mostly preset classes. Acceptable; do not add presets nobody uses.
 
+13. **Navigation fallback auto-creates a menu.** If a Navigation block without `ref` renders before any `wp_navigation` post exists, core creates a "Navigation" post containing a Page List block — and that post then wins over menus created later (it is also an axe `list` violation: `<ul>` nested directly in `<ul>`). On a fresh site, create the real menu **before** the first front-end render, or delete the auto-created one. Observed on dev after deployment.
+14. **Custom overlay template part** (`"overlay":"<slug>"` on the Navigation block) renders the theme's part inside the overlay with `disable-default-overlay`; nested Navigation blocks are forced to `overlayMenu: never` and rendered in a `div`. The theme owns all overlay styling in that mode. Images inside get `fetchpriority="low"` automatically.
+15. **Grid column/row spans** (`style.layout.columnSpan/rowSpan`) work with `minimumColumnWidth` grids and collapse responsively through core-generated container queries; a 2×2 + 1 + 1 / 3 composition fills a 3-column grid exactly.
+
 ## Gravity Forms 3.1 (for reference)
 
 Renders with its "theme framework": CSS 558 KB + 101 KB raw (**~36 KB gz**), jQuery + migrate

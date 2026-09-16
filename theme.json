@@ -790,6 +790,11 @@
 			"name": "post-meta",
 			"title": "Post meta",
 			"area": "uncategorized"
+		},
+		{
+			"name": "navigation-overlay",
+			"title": "Navigation overlay (mobile menu)",
+			"area": "navigation-overlay"
 		}
 	],
 	"patterns": []

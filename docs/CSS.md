@@ -51,3 +51,9 @@ beyond documented `wp-block-*` class names; utility classes.
 ## Budget
 
 Authored CSS in the parent: < 25 KB unminified (0.1.0: ~17 KB). Measure with `tools/payload.sh`.
+
+## Header collapse ranges (0.2.0)
+
+`.oogle-header` collapses the Navigation block below 1024px; add `oogle-header--collapse-lg`
+to the header Group to collapse below 1200px (seven links + phone + CTA need it). These are
+the only two ranges; if a menu still does not fit, shorten it.

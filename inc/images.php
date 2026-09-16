@@ -46,9 +46,9 @@ function oogle_image_output_format( array $formats ): array {
 add_filter( 'image_editor_output_format', 'oogle_image_output_format' );
 
 /**
- * Guarantee LCP treatment for the hero pattern's image.
+ * Guarantee LCP treatment for the hero image.
  *
- * The hero pattern gives its Cover block the class "oogle-lcp". Core's
+ * A hero pattern gives its Cover or Image block the class "oogle-lcp". Core's
  * heuristic (wp_filter_content_tags) already avoids lazy-loading the first
  * content images and adds fetchpriority="high" to the first large one; this
  * makes the outcome deterministic for the one element we know is the LCP.
@@ -74,3 +74,4 @@ function oogle_cover_lcp_attributes( string $content, array $block ): string {
 	return $content;
 }
 add_filter( 'render_block_core/cover', 'oogle_cover_lcp_attributes', 10, 2 );
+add_filter( 'render_block_core/image', 'oogle_cover_lcp_attributes', 10, 2 );

@@ -5,6 +5,24 @@ Versioning: see docs/RELEASES.md.
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-09-16
+
+First real page built on the framework (Precision Kitchen & Bath homepage) and first
+deployment to a LiteSpeed/cPanel host (WordPress 7.1, PHP 8.4).
+
+### Added
+- `parts/navigation-overlay.html` — a designed mobile menu using WP 7.1's `navigation-overlay` template-part area; the header Navigation block references it via `"overlay":"navigation-overlay"`. Overlay CSS in `blocks/core-navigation.css` (stacked items, hairlines, submenus expanded below their parent).
+- Group block style `mosaic`: a grid of Image blocks that fill their cells so column/row spans compose (captions hidden, used by the lightbox).
+- Header class `oogle-header--collapse-lg`: collapses the Navigation block below 1200px instead of 1024px for long menus.
+- LCP guarantee now also applies to Image blocks carrying the `oogle-lcp` class (`render_block_core/image`).
+
+### Fixed
+- Testimonial citations inherit color so they stay visible on dark section styles.
+- Overlay submenu items no longer render beside their parent.
+
+### Changed
+- Hero pattern documentation: full-bleed Cover hero is not the only option; a split hero (Columns + Image) is preferred when photography is under ~1600px wide.
+
 ## [0.1.0] — 2026-09-16
 
 Framework skeleton, validated on WordPress 7.1 / PHP 8.3 with a proof-of-concept page and

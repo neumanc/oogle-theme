@@ -26,6 +26,7 @@ function oogle_register_block_styles(): void {
 		// Group.
 		array( 'core/group', 'card',          __( 'Card', 'oogle' ) ),
 		array( 'core/group', 'card-flush',    __( 'Card (flush media)', 'oogle' ) ),
+		array( 'core/group', 'mosaic',        __( 'Mosaic (grid of images)', 'oogle' ) ),
 		// "section-tint" and "section-reversed" are section styles defined in
 		// styles/*.json (theme.json partials) because they recolor nested
 		// headings, links and buttons — which JSON does safely and CSS cannot.

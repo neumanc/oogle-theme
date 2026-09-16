@@ -7,7 +7,7 @@ header; core registers them automatically. Categories: `oogle-sections`, `oogle-
 
 | Slug | Composition | Notes |
 |---|---|---|
-| `oogle/hero-cover` | Cover (scrim gradient, `oogle-lcp`) → Group → eyebrow, **H1**, lead, Buttons | Only pattern with an H1; use with the `page-no-title` template |
+| `oogle/hero-cover` | Cover (scrim gradient, `oogle-lcp`) → Group → eyebrow, **H1**, lead, Buttons | Only pattern with an H1; use with the `page-no-title` template. Needs ≥1600px photography; otherwise build a **split hero** (Columns: text 55% / Image 45% with `oogle-lcp`) as the Precision homepage does |
 | `oogle/section-split` | Group → Columns 7/5 → eyebrow, H2, paragraph, checklist, outline button / Image 4:5 | Apply Columns style "Reverse when stacked" to keep the image first on phones |
 | `oogle/cards-grid` | Group (tint) → intro → Group **grid** (min column 17rem) → Group `card-flush` × 3 | Duplicate a card to add one; reflows with no breakpoints |
 | `oogle/cta-panel` | Group (reversed) → H2, lead, Buttons (primary + text `tel:`) | Every page should end with one |

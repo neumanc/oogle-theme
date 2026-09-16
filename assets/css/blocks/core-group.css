@@ -33,3 +33,26 @@
 
 /* Full-bleed sections inside root-padding-aware layouts keep their inner
    content aligned to the page grid; nothing to do — core handles it. */
+
+/* Mosaic: a Group with grid layout holding Image blocks. Images fill their
+   cells so column/row spans compose cleanly; captions are for the lightbox. */
+.is-style-mosaic > .wp-block-image {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: clip;
+	border-radius: var(--wp--custom--radius--md);
+}
+
+.is-style-mosaic > .wp-block-image img {
+	flex: 1 1 auto;
+	inline-size: 100%;
+	block-size: 100%;
+	min-block-size: 0;
+	object-fit: cover;
+	border-radius: 0;
+}
+
+.is-style-mosaic > .wp-block-image figcaption {
+	display: none;
+}
