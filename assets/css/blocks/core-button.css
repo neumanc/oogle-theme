@@ -1,0 +1,47 @@
+/* core/button — block styles: outline (core), text (ours) */
+
+.wp-block-button.is-style-outline > .wp-block-button__link {
+	background: transparent;
+	border: 2px solid currentColor;
+	color: var(--wp--preset--color--primary-deep);
+	padding-block: calc(0.8em - 2px);
+}
+
+.wp-block-button.is-style-outline > .wp-block-button__link:hover,
+.wp-block-button.is-style-outline > .wp-block-button__link:focus-visible {
+	background: var(--wp--preset--color--primary-deep);
+	color: var(--wp--preset--color--base);
+}
+
+/* Outline buttons inside reversed/cover surfaces stay legible. */
+:where(.is-style-section-reversed, .is-style-section-primary, .wp-block-cover) .wp-block-button.is-style-outline > .wp-block-button__link {
+	color: var(--wp--preset--color--base);
+}
+
+:where(.is-style-section-reversed, .is-style-section-primary, .wp-block-cover) .wp-block-button.is-style-outline > .wp-block-button__link:hover {
+	background: var(--wp--preset--color--base);
+	color: var(--wp--preset--color--contrast);
+}
+
+/* Text-link button: keeps the Buttons layout and target size, looks like a link with an arrow. */
+.wp-block-button.is-style-text > .wp-block-button__link {
+	background: transparent;
+	color: var(--wp--preset--color--primary-deep);
+	padding-inline: 0;
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}
+
+.wp-block-button.is-style-text > .wp-block-button__link::after {
+	content: " →";
+	transition: transform var(--wp--custom--transition--fast);
+	display: inline-block;
+}
+
+.wp-block-button.is-style-text > .wp-block-button__link:hover::after {
+	transform: translateX(0.2em);
+}
+
+:where(.is-style-section-reversed, .is-style-section-primary) .wp-block-button.is-style-text > .wp-block-button__link {
+	color: var(--wp--preset--color--base);
+}

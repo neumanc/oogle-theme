@@ -1,0 +1,107 @@
+/**
+ * Oogle — base stylesheet (front end).
+ *
+ * The ONLY global stylesheet. Everything that can live in theme.json does;
+ * everything block-specific lives in blocks/*.css and loads per block.
+ * Rules here: focus, skip link, motion, a handful of element defaults.
+ * Specificity: single class or element + pseudo-class. No IDs. One !important
+ * (reduced motion), documented.
+ */
+
+/* ---- Document ---------------------------------------------------------- */
+
+html {
+	-webkit-text-size-adjust: 100%;
+	scroll-behavior: smooth;
+}
+
+body {
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+	overflow-wrap: break-word;
+}
+
+/* Full-height page so a short 404 still pushes the footer down. */
+body {
+	min-block-size: 100dvh;
+	display: flex;
+	flex-direction: column;
+}
+
+.wp-site-blocks {
+	display: flex;
+	flex-direction: column;
+	flex: 1 0 auto;
+}
+
+main {
+	flex: 1 0 auto;
+}
+
+/* ---- Focus --------------------------------------------------------------- */
+
+/* One ring for everything. Never remove; only override the color per surface. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+	outline: 2px solid var(--wp--preset--color--primary-deep);
+	outline-offset: 2px;
+	border-radius: var(--wp--custom--radius--sm);
+}
+
+:where(.is-style-section-reversed, .is-style-section-primary, .wp-block-cover) :where(a, button):focus-visible {
+	outline-color: var(--wp--preset--color--base);
+}
+
+/* ---- Skip link ------------------------------------------------------------ */
+/* Core injects and styles the skip link for block themes (printed in the
+   footer, so it also wins the cascade). Nothing to add. */
+
+/* ---- Selection ------------------------------------------------------------ */
+
+::selection {
+	background: var(--wp--preset--color--primary-tint);
+	color: var(--wp--preset--color--contrast);
+}
+
+/* ---- Touch targets (WCAG 2.5.8) ---------------------------------------- */
+
+.wp-element-button,
+.wp-block-button__link,
+.wp-block-search__button {
+	min-block-size: var(--wp--custom--target--min);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	transition: background-color var(--wp--custom--transition--base), color var(--wp--custom--transition--base);
+}
+
+/* ---- Media ------------------------------------------------------------------ */
+
+img,
+video {
+	block-size: auto;
+	max-inline-size: 100%;
+}
+
+/* ---- Header --------------------------------------------------------------- */
+
+.oogle-header {
+	z-index: var(--wp--custom--z--header);
+	border-block-end: 1px solid var(--wp--preset--color--line);
+}
+
+/* ---- Reduced motion --------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+
+	/* The one permitted !important: nothing may animate for these users. */
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}

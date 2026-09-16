@@ -1,0 +1,13 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/theme.json",
+	"version": 3,
+	"slug": "section-tint",
+	"title": "Section (tint)",
+	"blockTypes": [ "core/group" ],
+	"styles": {
+		"color": {
+			"background": "var(--wp--preset--color--surface)",
+			"text": "var(--wp--preset--color--contrast)"
+		}
+	}
+}

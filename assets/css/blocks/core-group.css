@@ -1,0 +1,35 @@
+/* core/group — block styles: card, card-flush; container-query for cards */
+
+.is-style-card,
+.is-style-card-flush {
+	background: var(--wp--preset--color--base);
+	border: var(--wp--custom--border--width) solid var(--wp--preset--color--line);
+	border-radius: var(--wp--custom--radius--md);
+	box-shadow: var(--wp--preset--shadow--sm);
+	overflow: clip;
+}
+
+.is-style-card {
+	padding: var(--wp--preset--spacing--50);
+}
+
+/* Flush cards: the first image bleeds to the card edges; inner group pads itself. */
+.is-style-card-flush > .wp-block-image:first-child,
+.is-style-card-flush > .wp-block-post-featured-image:first-child {
+	margin-block-start: 0;
+}
+
+.is-style-card-flush > .wp-block-image:first-child img,
+.is-style-card-flush > .wp-block-post-featured-image:first-child img {
+	border-radius: 0;
+	display: block;
+	inline-size: 100%;
+}
+
+/* No container query here — yet. Core's Grid layout puts container-type on the
+   grid PARENT, so a query on the card resolves against the grid's width, not
+   the card's (observed in testing). A side-by-side "wide card" needs an inner
+   wrapper to query; add it when a real design needs it. */
+
+/* Full-bleed sections inside root-padding-aware layouts keep their inner
+   content aligned to the page grid; nothing to do — core handles it. */

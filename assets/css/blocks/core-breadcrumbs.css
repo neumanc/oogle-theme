@@ -1,0 +1,11 @@
+/* core/breadcrumbs — core already renders the separator via li::after and
+   var(--separator); we only tone it down and prevent wrapping mid-crumb. */
+
+.wp-block-breadcrumbs li:not(:last-child)::after {
+	color: var(--wp--preset--color--muted);
+	opacity: 1;
+}
+
+.wp-block-breadcrumbs li {
+	white-space: nowrap;
+}

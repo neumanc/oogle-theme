@@ -1,0 +1,35 @@
+/* core/list — block styles: checklist, inline */
+
+.wp-block-list.is-style-checklist {
+	list-style: none;
+	padding-inline-start: 0;
+}
+
+.wp-block-list.is-style-checklist > li {
+	position: relative;
+	padding-inline-start: 1.75em;
+}
+
+.wp-block-list.is-style-checklist > li::before {
+	content: "";
+	position: absolute;
+	inset-inline-start: 0;
+	inset-block-start: 0.35em;
+	inline-size: 1.1em;
+	block-size: 1.1em;
+	background: currentColor;
+	color: var(--wp--preset--color--primary);
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.wp-block-list.is-style-inline {
+	list-style: none;
+	padding-inline-start: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--wp--preset--spacing--20) var(--wp--preset--spacing--50);
+}
+
+.wp-block-list.is-style-inline > li {
+	margin: 0;
+}

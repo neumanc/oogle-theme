@@ -1,0 +1,19 @@
+/* core/post-template — card hover affordance for linked titles */
+
+.wp-block-post-template .is-style-card-flush {
+	transition: box-shadow var(--wp--custom--transition--base), transform var(--wp--custom--transition--base);
+}
+
+.wp-block-post-template .is-style-card-flush:has(a:hover),
+.wp-block-post-template .is-style-card-flush:has(a:focus-visible) {
+	box-shadow: var(--wp--preset--shadow--md);
+}
+
+.wp-block-post-template .wp-block-post-title a {
+	text-decoration: none;
+	color: inherit;
+}
+
+.wp-block-post-template .wp-block-post-title a:hover {
+	text-decoration: underline;
+}

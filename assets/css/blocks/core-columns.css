@@ -1,0 +1,10 @@
+/* core/columns — block style: reverse-on-stack */
+
+/* When columns stack (core adds the mobile stacking below 782px), put the
+   second column first. Used for image-left/text-right sections so the image
+   still leads on phones. */
+@media (max-width: 781px) {
+	.wp-block-columns.is-style-reverse-on-stack:not(.is-not-stacked-on-mobile) {
+		flex-direction: column-reverse;
+	}
+}

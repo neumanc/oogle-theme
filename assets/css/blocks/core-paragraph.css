@@ -1,0 +1,19 @@
+/* core/paragraph — the eyebrow and lead styles themselves live in theme.json
+   (styles.blocks.core/paragraph.variations) so section styles can recolor them.
+   Only the prose measure needs CSS. */
+
+.is-layout-constrained > .wp-block-paragraph:not(.has-text-align-center) {
+	max-inline-size: var(--wp--custom--measure--prose);
+}
+
+/* Section styles (styles/*.json) cannot target block-style variations of
+   nested blocks — core does not emit those rules (verified on 7.1). So the
+   eyebrow/lead colors on dark surfaces are set here. Specificity 0,2,0 beats
+   core's :root :where(p.is-style-lead--N) at 0,1,0. */
+:is(.is-style-section-reversed, .is-style-section-primary, .wp-block-cover) .is-style-lead {
+	color: var(--wp--preset--color--line);
+}
+
+:is(.is-style-section-reversed, .is-style-section-primary, .wp-block-cover) .is-style-eyebrow {
+	color: var(--wp--preset--color--primary-tint);
+}

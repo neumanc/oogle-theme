@@ -1,0 +1,13 @@
+/**
+ * Oogle — editor-only corrections.
+ * theme.json and blocks/*.css already apply inside the editor canvas; this
+ * file only fixes the few places the canvas differs from the front end.
+ */
+
+/* Make the sticky header non-sticky while editing so it never covers blocks. */
+.editor-styles-wrapper .oogle-header {
+	position: static !important; /* Editor-only; core sets position inline. */
+}
+
+/* Placeholder eyebrow/lead styles need the same treatment as front end; they
+   come from blocks/core-paragraph.css which core also loads here. */

@@ -1,0 +1,93 @@
+/* core/navigation — desktop spacing, submenus, overlay (mobile) */
+
+/* Horizontal navs (header) get a 44px target. Vertical lists (footer) keep
+   their natural rhythm; 2.5.8 needs 24px and the line-height already gives it. */
+.wp-block-navigation:not(.is-vertical) .wp-block-navigation-item__content {
+	padding-block: 0.5em;
+	min-block-size: var(--wp--custom--target--min);
+	display: inline-flex;
+	align-items: center;
+}
+
+/* Submenu panel. */
+.wp-block-navigation .wp-block-navigation__submenu-container {
+	background: var(--wp--preset--color--base);
+	border: 1px solid var(--wp--preset--color--line);
+	border-radius: var(--wp--custom--radius--md);
+	box-shadow: var(--wp--preset--shadow--lg);
+	padding: var(--wp--preset--spacing--20);
+	min-inline-size: 14rem;
+}
+
+.wp-block-navigation .wp-block-navigation__submenu-container .wp-block-navigation-item__content {
+	padding: var(--wp--preset--spacing--20) var(--wp--preset--spacing--30);
+	border-radius: var(--wp--custom--radius--sm);
+}
+
+.wp-block-navigation .wp-block-navigation__submenu-container .wp-block-navigation-item__content:hover,
+.wp-block-navigation .wp-block-navigation__submenu-container .wp-block-navigation-item__content:focus-visible {
+	background: var(--wp--preset--color--surface);
+	text-decoration: none;
+}
+
+/* Overlay (mobile) menu: larger tap targets and vertical rhythm. */
+.wp-block-navigation .wp-block-navigation__responsive-container.is-menu-open {
+	background: var(--wp--preset--color--base);
+	padding: var(--wp--preset--spacing--60) var(--wp--preset--spacing--50);
+}
+
+.wp-block-navigation .wp-block-navigation__responsive-container.is-menu-open .wp-block-navigation-item__content {
+	font-size: var(--wp--preset--font-size--large);
+	padding-block: var(--wp--preset--spacing--30);
+}
+
+/* :where() keeps specificity at 0,1,0 so core's own "hide the open button on
+   desktop" rule (0,2,0) still wins. Never out-specify core here. */
+:where(.wp-block-navigation) .wp-block-navigation__responsive-container-open,
+:where(.wp-block-navigation) .wp-block-navigation__responsive-container-close {
+	min-inline-size: var(--wp--custom--target--min);
+	min-block-size: var(--wp--custom--target--min);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Links never break mid-label. */
+.wp-block-navigation:not(.is-vertical) .wp-block-navigation-item__content {
+	white-space: nowrap;
+}
+
+/* ---- The theme's one deliberate breakpoint override ----------------------
+   Core collapses the Navigation block into the overlay below 600px and that
+   value is not configurable. A real header (logo + 6 links + CTA) does not
+   fit until roughly 1024px. Between 600 and 1023px we re-apply core's own two
+   "collapsed" rules, scoped to the header, and nothing else — the overlay
+   itself, its focus trap and its open/close logic remain core's. Do not add
+   further breakpoints here; shorten the menu instead. */
+@media (min-width: 600px) and (max-width: 1023px) {
+	.oogle-header .wp-block-navigation.is-responsive .wp-block-navigation__responsive-container:not(.is-menu-open) {
+		display: none;
+	}
+
+	.oogle-header .wp-block-navigation.is-responsive .wp-block-navigation__responsive-container-open {
+		display: flex;
+	}
+}
+
+/* The header CTA hides on phones; the overlay menu and footer carry contact.
+   .oogle-header is included for specificity over core's .wp-block-buttons.is-layout-flex. */
+@media (max-width: 599px) {
+	.oogle-header .oogle-header__cta {
+		display: none;
+	}
+}
+
+/* Submenu chevron: core draws it at 0.6em, which is below the 24px minimum
+   target (2.5.8) when it is the toggle. Give it a 24px hit area. */
+.wp-block-navigation .wp-block-navigation__submenu-icon {
+	min-inline-size: 24px;
+	min-block-size: 24px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}

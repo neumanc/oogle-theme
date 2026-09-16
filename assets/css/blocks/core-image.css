@@ -1,0 +1,8 @@
+/* core/image — full-bleed images have no radius; content images keep the token radius from theme.json */
+
+.wp-block-image.alignfull img,
+.wp-block-image.alignfull {
+	border-radius: 0;
+}
+
+/* Images inside flush cards are handled in core-group.css. */

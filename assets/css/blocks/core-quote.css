@@ -1,0 +1,25 @@
+/* core/quote — block style: testimonial */
+
+.wp-block-quote.is-style-testimonial {
+	border: 0;
+	padding: 0;
+	margin: 0;
+	font-size: var(--wp--preset--font-size--medium);
+}
+
+.wp-block-quote.is-style-testimonial > p:first-of-type::before {
+	content: "\201C";
+	font-family: var(--wp--preset--font-family--heading);
+	font-size: 2.5em;
+	line-height: 0;
+	vertical-align: -0.35em;
+	margin-inline-end: 0.1em;
+	color: var(--wp--preset--color--accent);
+}
+
+.wp-block-quote.is-style-testimonial > cite {
+	display: block;
+	margin-block-start: var(--wp--preset--spacing--30);
+	font-weight: var(--wp--custom--font--weight--semibold);
+	color: var(--wp--preset--color--contrast);
+}

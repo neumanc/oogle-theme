@@ -1,0 +1,21 @@
+/*
+Theme Name: Oogle
+Theme URI: https://oogle.com/
+Author: Oogle
+Author URI: https://oogle.com/
+Description: Oogle's reusable WordPress block theme foundation. Neutral by design — every client site is a child theme that supplies its own theme.json values, fonts and patterns. Built on core blocks, theme.json and native WordPress APIs; no page builder, no build step, no jQuery.
+Version: 0.1.0
+Requires at least: 7.0
+Tested up to: 7.1
+Requires PHP: 8.1
+License: GNU General Public License v2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: oogle
+Tags: block-patterns, block-styles, full-site-editing, editor-style, custom-colors, custom-logo, template-editing, wide-blocks, accessibility-ready
+Update URI: https://github.com/oogle/oogle-theme
+*/
+
+/*
+ * Intentionally empty. All styles live in theme.json and assets/css/.
+ * This file exists because WordPress requires it for the theme header.
+ */

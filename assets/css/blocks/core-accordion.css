@@ -1,0 +1,42 @@
+/* core/accordion — FAQ chrome */
+
+.wp-block-accordion-heading__toggle {
+	inline-size: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--wp--preset--spacing--40);
+	padding-block: var(--wp--preset--spacing--40);
+	padding-inline: 0;
+	background: none;
+	border: 0;
+	color: inherit;
+	font: inherit;
+	text-align: start;
+	cursor: pointer;
+	min-block-size: var(--wp--custom--target--min);
+}
+
+.wp-block-accordion-heading__toggle::after {
+	content: "+";
+	flex: none;
+	font-family: var(--wp--preset--font-family--body);
+	font-size: 1.5em;
+	line-height: 1;
+	color: var(--wp--preset--color--primary);
+	transition: transform var(--wp--custom--transition--base);
+}
+
+.wp-block-accordion-item.is-open .wp-block-accordion-heading__toggle::after {
+	transform: rotate(45deg);
+}
+
+.wp-block-accordion-panel {
+	padding-block-end: var(--wp--preset--spacing--50);
+}
+
+/* Core hides its own icon element when showIcon is false; if the theme's
+   pattern leaves showIcon on, hide core's SVG so two icons never appear. */
+.wp-block-accordion-heading__toggle > .wp-block-accordion-heading__icon {
+	display: none;
+}

@@ -1,0 +1,69 @@
+/**
+ * Gravity Forms — token mapping.
+ *
+ * Loaded ONLY when Gravity Forms renders a form (see inc/assets.php). Gravity
+ * Forms 2.7+ ships a "theme framework" driven by CSS custom properties; we
+ * map those to Oogle tokens instead of restyling markup, so GF updates keep
+ * working and a child theme changes the look by changing tokens.
+ *
+ * Reference: https://docs.gravityforms.com/gravity-forms-css-custom-properties/
+ */
+
+.gform_wrapper.gravity-theme,
+.gform_wrapper.gform-theme--foundation,
+.gform_wrapper.gform-theme--framework {
+	--gf-color-primary: var(--wp--preset--color--accent);
+	--gf-color-primary-contrast: var(--wp--preset--color--base);
+	--gf-color-primary-darker: var(--wp--preset--color--accent-deep);
+	--gf-color-primary-lighter: var(--wp--preset--color--accent-tint);
+	--gf-color-secondary: var(--wp--preset--color--surface);
+	--gf-color-secondary-contrast: var(--wp--preset--color--contrast);
+	--gf-color-in-error: #b3261e;
+	--gf-color-in-error-contrast: var(--wp--preset--color--base);
+	--gf-font-size-primary: var(--wp--preset--font-size--medium);
+	--gf-font-size-secondary: var(--wp--preset--font-size--small);
+	--gf-radius: var(--wp--custom--radius--sm);
+	--gf-ctrl-border-color: var(--wp--preset--color--muted);
+	--gf-ctrl-border-color-focus: var(--wp--preset--color--primary-deep);
+	--gf-ctrl-label-color-primary: var(--wp--preset--color--contrast);
+	--gf-ctrl-label-color-secondary: var(--wp--preset--color--muted);
+	--gf-ctrl-btn-bg-color-primary: var(--wp--preset--color--accent);
+	--gf-ctrl-btn-bg-color-hover-primary: var(--wp--preset--color--accent-deep);
+	--gf-ctrl-btn-color-primary: var(--wp--preset--color--base);
+	--gf-ctrl-btn-radius: var(--wp--custom--radius--sm);
+	--gf-ctrl-btn-font-weight: var(--wp--custom--font--weight--semibold);
+	--gf-ctrl-btn-size: var(--wp--custom--target--min);
+	--gf-ctrl-size: var(--wp--custom--target--min);
+	--gf-ctrl-choice-size: 1.25rem;
+	--gf-form-gap-y: var(--wp--preset--spacing--40);
+	--gf-form-gap-x: var(--wp--preset--spacing--40);
+	--gf-ctrl-shadow-focus: 0 0 0 2px var(--wp--preset--color--base), 0 0 0 4px var(--wp--preset--color--primary-deep);
+}
+
+/* Legacy (pre-framework) rendering: minimal, low-specificity fallbacks. */
+.gform_wrapper :where(input:not([type=submit]):not([type=checkbox]):not([type=radio]), select, textarea) {
+	inline-size: 100%;
+	border: 1px solid var(--wp--preset--color--muted);
+	border-radius: var(--wp--custom--radius--sm);
+	padding: 0.6em 0.8em;
+	font: inherit;
+	background: var(--wp--preset--color--base);
+	color: var(--wp--preset--color--contrast);
+}
+
+.gform_wrapper :where(input[type=submit], button[type=submit]) {
+	min-block-size: var(--wp--custom--target--min);
+	padding: 0.8em 1.4em;
+	border: 0;
+	border-radius: var(--wp--custom--radius--sm);
+	background: var(--wp--preset--color--accent);
+	color: var(--wp--preset--color--base);
+	font: inherit;
+	font-weight: var(--wp--custom--font--weight--semibold);
+	cursor: pointer;
+}
+
+.gform_wrapper .validation_message,
+.gform_wrapper .gform_validation_errors {
+	color: #b3261e;
+}
