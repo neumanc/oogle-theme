@@ -9,8 +9,10 @@
  *  - Everything else is attached to a specific core block with
  *    wp_enqueue_block_style(), so it loads only on pages rendering that block
  *    and is inlined by core when small.
- *  - The theme ships NO JavaScript at 0.1.0. Core's Interactivity API modules
- *    (navigation overlay, accordion, lightbox) load themselves on demand.
+ *  - JavaScript is limited to small progressive-enhancement script modules
+ *    (reveal, rotator) enqueued only when a block asks for them; core's
+ *    Interactivity API modules (navigation overlay, accordion, lightbox) load
+ *    themselves on demand.
  *
  * @package Oogle
  */
@@ -111,42 +113,65 @@ function oogle_enqueue_block_styles(): void {
 add_action( 'init', 'oogle_enqueue_block_styles' );
 
 /**
- * Reveal module: registered always, enqueued only when a rendered block
- * carries an "oogle-reveal" class (checked at render time, before wp_footer
- * prints script modules). ~1 KB, deferred, no dependencies.
+ * Progressive-enhancement script modules.
+ *
+ * Each module is registered always and enqueued only when a rendered block
+ * carries its trigger class (checked at render time, before wp_footer prints
+ * script modules). All are small, deferred, dependency-free ES modules.
+ *
+ * @return array<string, array{file:string, class:string}>
+ */
+function oogle_script_modules(): array {
+	$modules = array(
+		'oogle-reveal'  => array( 'file' => 'assets/js/reveal.js',  'class' => 'oogle-reveal' ),  // Scroll entrances (~1.5 KB).
+		'oogle-rotator' => array( 'file' => 'assets/js/rotator.js', 'class' => 'oogle-rotator' ), // Crossfading photo stack (~2.9 KB).
+	);
+
+	/**
+	 * Filter the theme's script modules.
+	 *
+	 * @param array<string, array{file:string, class:string}> $modules Handle => file + trigger class.
+	 */
+	return (array) apply_filters( 'oogle/assets/script_modules', $modules );
+}
+
+/**
+ * Register the modules.
  *
  * @return void
  */
-function oogle_register_reveal_module(): void {
-	wp_register_script_module(
-		'oogle-reveal',
-		OOGLE_URI . '/assets/js/reveal.js',
-		array(),
-		oogle_asset_version( 'assets/js/reveal.js' )
-	);
+function oogle_register_script_modules(): void {
+	foreach ( oogle_script_modules() as $handle => $module ) {
+		wp_register_script_module( $handle, OOGLE_URI . '/' . $module['file'], array(), oogle_asset_version( $module['file'] ) );
+	}
 }
-add_action( 'init', 'oogle_register_reveal_module' );
+add_action( 'init', 'oogle_register_script_modules' );
 
 /**
- * Enqueue the reveal module the first time a block with an oogle-reveal class renders.
+ * Enqueue a module the first time a block with its trigger class renders.
  *
  * @param string               $content Block HTML.
  * @param array<string, mixed> $block   Parsed block.
  * @return string
  */
-function oogle_maybe_enqueue_reveal( string $content, array $block ): string {
-	static $done = false;
-	if ( $done || is_admin() ) {
+function oogle_maybe_enqueue_script_modules( string $content, array $block ): string {
+	static $done = array();
+	if ( is_admin() ) {
 		return $content;
 	}
 	$class = $block['attrs']['className'] ?? '';
-	if ( is_string( $class ) && str_contains( $class, 'oogle-reveal' ) ) {
-		wp_enqueue_script_module( 'oogle-reveal' );
-		$done = true;
+	if ( ! is_string( $class ) || '' === $class ) {
+		return $content;
+	}
+	foreach ( oogle_script_modules() as $handle => $module ) {
+		if ( ! isset( $done[ $handle ] ) && str_contains( $class, $module['class'] ) ) {
+			wp_enqueue_script_module( $handle );
+			$done[ $handle ] = true;
+		}
 	}
 	return $content;
 }
-add_filter( 'render_block', 'oogle_maybe_enqueue_reveal', 10, 2 );
+add_filter( 'render_block', 'oogle_maybe_enqueue_script_modules', 10, 2 );
 
 /**
  * Gravity Forms integration stylesheet.

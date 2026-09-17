@@ -75,3 +75,32 @@ function oogle_cover_lcp_attributes( string $content, array $block ): string {
 }
 add_filter( 'render_block_core/cover', 'oogle_cover_lcp_attributes', 10, 2 );
 add_filter( 'render_block_core/image', 'oogle_cover_lcp_attributes', 10, 2 );
+
+/**
+ * Force lazy, low-priority loading for an image marked "oogle-defer".
+ *
+ * Core skips lazy-loading for the first few content images; a rotator's
+ * second and third slides would otherwise be fetched eagerly next to the LCP
+ * image. With loading="lazy" a slide that is display:none is not requested
+ * at all until a script shows it (verified in Chromium and Firefox).
+ *
+ * @param string               $content Rendered block HTML.
+ * @param array<string, mixed> $block   Parsed block.
+ * @return string
+ */
+function oogle_defer_image_attributes( string $content, array $block ): string {
+	$class = $block['attrs']['className'] ?? '';
+	if ( ! is_string( $class ) || ! str_contains( $class, 'oogle-defer' ) ) {
+		return $content;
+	}
+
+	$processor = new WP_HTML_Tag_Processor( $content );
+	if ( $processor->next_tag( 'img' ) ) {
+		$processor->set_attribute( 'loading', 'lazy' );
+		$processor->set_attribute( 'fetchpriority', 'low' );
+		$processor->set_attribute( 'decoding', 'async' );
+		return $processor->get_updated_html();
+	}
+	return $content;
+}
+add_filter( 'render_block_core/image', 'oogle_defer_image_attributes', 10, 2 );

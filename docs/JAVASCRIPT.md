@@ -1,11 +1,13 @@
 # JavaScript
 
-## The default is one small module, loaded only when used
+## The default is a few small modules, each loaded only when used
 
-Oogle ships a single script of its own: `assets/js/reveal.js` (~1 KB, an ES module, no
-dependencies). It loads only on pages where a block carries an `oogle-reveal*` class. Every
-other interactive behaviour comes from core's Interactivity API modules, which load
-themselves only for blocks that need them:
+Oogle ships two scripts of its own, both ES modules with no dependencies:
+`assets/js/reveal.js` (~1.5 KB, scroll entrances) and `assets/js/rotator.js` (~2.9 KB,
+crossfading hero photos). Each loads only on pages where a block carries its trigger class
+(`oogle-reveal*`, `oogle-rotator`); the map lives in `inc/assets.php` and is filterable
+(`oogle/assets/script_modules`). Every other interactive behaviour comes from core's
+Interactivity API modules, which load themselves only for blocks that need them:
 
 | Need | Provided by | Bytes (7.1, min) |
 |---|---|---|
@@ -17,6 +19,7 @@ themselves only for blocks that need them:
 | Smooth scroll | CSS `scroll-behavior` (off under reduced motion) | 0 |
 | Scroll-entrance reveals | `reveal.js` + CSS in `base.css` | ~1 KB |
 | Hover zoom, scroll-driven image drift | CSS only (`oogle-zoom-hover`, `oogle-drift`) | 0 |
+| Rotating hero photography | `rotator.js` + CSS in `base.css` | ~3 KB |
 
 Zero JS was never the goal. The goal is the smallest maintainable amount, and motion that
 earns its place.
@@ -34,8 +37,29 @@ earns its place.
 5. Under `prefers-reduced-motion: reduce` the module exits before touching the DOM and the
    CSS cancels every transition anyway.
 
-`--stagger` animates the element's direct children with 80 ms steps (up to six). Keep it for
-grids of images or short lists; do not stagger paragraphs of copy.
+`--stagger` animates the element's direct children with 80 ms steps (up to eight). Keep it
+for grids of images or short lists; do not stagger paragraphs of copy. `--clip` wipes the
+element's `img` (the clip lives on the image, not the observed element, because a
+`clip-path` on the observed element gives IntersectionObserver nothing to intersect).
+
+## The rotator contract (0.4.0)
+
+1. A Group with the class `oogle-rotator` whose direct children are Image blocks. Give the
+   first `oogle-lcp` (eager, high priority: it is the LCP candidate) and every other one
+   `oogle-defer` (lazy, low priority). Use `alt=""`: the stack is decorative behind stable
+   copy, which is the only kind of rotation this module supports. Meaningful content that
+   changes needs controls, and this module has none by design.
+2. CSS keeps every slide after the first `display:none` until the module adds `is-queued`.
+   A lazy image with no box is never requested, so a page without JS, with reduced motion,
+   or in a background tab downloads exactly one hero image.
+3. After `load` the module queues slide 2 (one image in flight), waits 6.5 s, decodes it,
+   fades it in over slide 1 (1.7 s), then queues slide 3, and so on. The outgoing slide stays
+   opaque underneath until the fade ends. Timing is paused while the tab is hidden or the
+   stack is scrolled out of view.
+4. Each shown slide's image eases from `scale(1.08)` to `scale(1)` over the hold: a settle,
+   not a pan.
+5. `prefers-reduced-motion: reduce`: the module returns before touching the DOM; the first
+   image stays, unscaled.
 
 What the module will never do: scroll-jack, pin, parallax the page, measure layout in a
 scroll handler, or run on every page.

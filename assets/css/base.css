@@ -71,6 +71,14 @@ main {
 	margin-block-start: 0;
 }
 
+/* Header, main and footer butt together; templates pad their own tops, so a
+   dark header over a dark hero (or a dark footer under a dark band) shows no
+   strip of page background. Core puts the root block gap between them. */
+.wp-site-blocks > header + main,
+.wp-site-blocks > main + footer {
+	margin-block-start: 0;
+}
+
 /* ---- Skip link ------------------------------------------------------------ */
 /* Core injects and styles the skip link for block themes (printed in the
    footer, so it also wins the cascade). Nothing to add. */
@@ -106,7 +114,8 @@ video {
 
 .oogle-header {
 	z-index: var(--wp--custom--z--header);
-	border-block-end: 1px solid var(--wp--preset--color--line);
+	/* Hairline that works on a light or a dark header: 12% of the text colour. */
+	border-block-end: 1px solid color-mix(in srgb, currentColor 14%, transparent);
 }
 
 /* ---- Reduced motion --------------------------------------------------------- */
@@ -137,6 +146,17 @@ video {
 
 .oogle-js-reveal .oogle-reveal--clip:not(.is-visible) {
 	transform: none;
+}
+
+/* The clip goes on the image, not on the observed element: a clip-path on
+   the observed element itself gives IntersectionObserver an empty
+   intersection rect, so the reveal would never fire (found in 0.3.0). */
+.oogle-js-reveal .oogle-reveal--clip img {
+	clip-path: inset(0 0 0 0);
+	transition: clip-path 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.oogle-js-reveal .oogle-reveal--clip:not(.is-visible) img {
 	clip-path: inset(0 0 100% 0);
 }
 
@@ -148,15 +168,19 @@ video {
 	transform: translateX(1.5rem);
 }
 
+/* Photos settle into place: a small scale-down instead of a slide. */
+.oogle-js-reveal .oogle-reveal--scale:not(.is-visible) {
+	transform: scale(1.04);
+}
+
 .oogle-js-reveal [class*="oogle-reveal"] {
-	transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), clip-path 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+	transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
 	will-change: opacity, transform;
 }
 
 .oogle-js-reveal [class*="oogle-reveal"].is-visible {
 	opacity: 1;
 	transform: none;
-	clip-path: inset(0 0 0 0);
 	will-change: auto;
 }
 
@@ -177,6 +201,8 @@ video {
 .oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(4) { transition-delay: 0.24s; }
 .oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(5) { transition-delay: 0.32s; }
 .oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(6) { transition-delay: 0.40s; }
+.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(7) { transition-delay: 0.48s; }
+.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(8) { transition-delay: 0.56s; }
 
 /* ---- Image motion (CSS only) ------------------------------------------- */
 
@@ -204,6 +230,73 @@ video {
 	@keyframes oogle-drift {
 		from { translate: 0 -5%; }
 		to   { translate: 0 5%; }
+	}
+}
+
+/* ---- Rotator (assets/js/rotator.js) ------------------------------------ */
+/* A positioned box whose children are stacked, cover-fitted images. Without
+   the script only the first child is displayed; the script queues the others
+   one at a time (so their lazy images load) and crossfades them on top. The
+   incoming slide fades in OVER the current one, which stays fully opaque
+   underneath until the fade ends, so the photo never dips to dark mid-fade. */
+.oogle-rotator {
+	position: relative;
+	overflow: clip;
+	isolation: isolate;
+}
+
+.oogle-rotator > * {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	opacity: 0;
+	z-index: 0;
+}
+
+.oogle-rotator > :not(:first-child):not(.is-queued) {
+	display: none;
+}
+
+.oogle-rotator > * img {
+	display: block;
+	inline-size: 100%;
+	block-size: 100%;
+	object-fit: cover;
+	border-radius: 0;
+	transform: scale(1.08);
+	transform-origin: 50% 60%;
+}
+
+.oogle-rotator > :first-child,
+.oogle-rotator > .is-shown {
+	opacity: 1;
+	z-index: 2;
+}
+
+.oogle-rotator > .is-shown {
+	transition: opacity 1.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.oogle-rotator > .is-shown img,
+.oogle-rotator > .is-under img {
+	transform: scale(1);
+	transition: transform 8.4s linear; /* HOLD + FADE: settles over the whole hold */
+}
+
+.oogle-rotator > .is-under {
+	opacity: 1;
+	z-index: 1;
+}
+
+/* Once the script runs (is-active), the first slide is treated like any other. */
+.oogle-rotator.is-active > :first-child:not(.is-shown):not(.is-under) {
+	opacity: 0;
+	z-index: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.oogle-rotator > * img {
+		transform: none;
 	}
 }
 

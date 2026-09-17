@@ -5,6 +5,44 @@ Versioning: see docs/RELEASES.md.
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-09-17
+
+Second pass of the Precision homepage (Phase 2.5): a rotating hero, a dark header, and
+the fixes that a real design surfaced in 0.3.0's motion and form layers.
+
+### Added
+- `assets/js/rotator.js` (~2.9 KB script module): a crossfading photo stack for hero
+  backgrounds. Children of `.oogle-rotator` are the slides; the first is the LCP image, the
+  others carry `oogle-defer` and stay `display:none` (so their lazy images are never
+  requested) until the module queues them one at a time after `load`. Incoming slides fade
+  in over the current one, which stays opaque underneath, so the photo never dips dark
+  mid-fade. Paused while the tab is hidden or the stack is off screen; inert under
+  `prefers-reduced-motion`, without JS, or with one slide. CSS in `base.css`.
+- `inc/assets.php`: script modules are now a filterable map (`oogle/assets/script_modules`)
+  of handle → file + trigger class; each is enqueued the first time a block with its class
+  renders.
+- `inc/images.php`: `oogle-defer` on an Image block forces `loading="lazy"`,
+  `fetchpriority="low"`, `decoding="async"` regardless of core's first-N heuristic.
+- `oogle-reveal--scale` (photos settle from 1.04 to 1); `--stagger` now steps to eight children.
+- `oogle-mosaic--captions` on a mosaic Group: captions overlay the bottom of each photo and
+  slide up on hover/focus-within; shown at rest where there is no hover.
+- `base.css`: header/main and main/footer butt together (`.wp-site-blocks > header + main`),
+  so a dark header over a dark hero shows no strip of page background. Templates already
+  pad their own tops.
+
+### Changed
+- `.oogle-header` hairline is `color-mix(currentColor 14%)` instead of the `line` token, so
+  it works on a dark header.
+- Gravity Forms token mapping is now `!important`. GF 3.x prints a per-form `<style>` keyed
+  to the wrapper ID that resets the same variables to GF's defaults (its blue, grey borders,
+  3 px radius); an ID selector beats any class, so the mapping did not apply. A keyboard
+  focus ring is restated above GF's `outline: 0` (2.4.7/2.4.11).
+
+### Fixed
+- `oogle-reveal--clip` never fired for elements below the fold: a `clip-path` on the
+  observed element gives IntersectionObserver an empty intersection rect. The clip now
+  sits on the inner `img`.
+
 ## [0.3.0] — 2026-09-16
 
 Purposeful motion and a custom-look form layer, driven by the Precision homepage redesign

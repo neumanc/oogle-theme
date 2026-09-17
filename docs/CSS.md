@@ -23,7 +23,9 @@
   when you only want to *add* declarations.
 - Preset color classes (`has-*-background-color`) carry `!important` in core. Do not fight
   them; change the preset the block uses (that is why the hero uses a gradient *preset*).
-- One `!important` in the theme: reduced motion in `base.css`.
+- Two `!important` uses in the theme: reduced motion in `base.css`, and the Gravity Forms
+  variable mapping in `integrations/gravity-forms.css` (GF prints a per-form `<style>` keyed
+  to the wrapper ID that resets the same variables; nothing but `!important` beats an ID).
 - No cascade layers. Core's CSS is unlayered and unlayered beats layered regardless of
   specificity, so a layered theme rule could not override a core block without `!important`.
 
@@ -51,9 +53,11 @@ beyond documented `wp-block-*` class names; utility classes.
 
 ## Budget
 
-Authored front-end CSS in the parent (base + per-block files): < 25 KB unminified
-(0.1.0: ~17 KB; 0.3.0: ~21.8 KB). Integrations are budgeted separately (Gravity Forms:
-~5.8 KB, loaded only with a form). Measure with `tools/payload.sh`.
+Authored front-end CSS in the parent (base + per-block files): < 28 KB unminified
+(0.1.0: ~17 KB; 0.3.0: ~21.8 KB; 0.4.0: ~25.7 KB, of which the rotator and mosaic captions
+are ~2.5 KB). Only base.css is a separate request; per-block files are inlined by core when
+the block renders. Integrations are budgeted separately (Gravity Forms: ~6.5 KB, loaded only
+with a form). Measure with `tools/payload.sh`.
 
 ## Header collapse ranges (0.2.0)
 

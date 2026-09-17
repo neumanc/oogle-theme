@@ -56,3 +56,40 @@
 .is-style-mosaic > .wp-block-image figcaption {
 	display: none;
 }
+
+/* Mosaic with captions: the caption sits over the bottom edge of its photo
+   and slides up on hover or keyboard focus. Pointer-less devices (no hover)
+   see it at rest, so touch users are not left without the label. */
+.is-style-mosaic.oogle-mosaic--captions > .wp-block-image {
+	position: relative;
+}
+
+.is-style-mosaic.oogle-mosaic--captions > .wp-block-image figcaption {
+	display: block;
+	position: absolute;
+	inset-inline: 0;
+	inset-block-end: 0;
+	margin: 0;
+	padding: var(--wp--preset--spacing--60) var(--wp--preset--spacing--40) var(--wp--preset--spacing--40);
+	color: #fff;
+	font-size: var(--wp--preset--font-size--small);
+	line-height: 1.35;
+	background: linear-gradient(to top, rgb(0 0 0 / 0.7), rgb(0 0 0 / 0));
+	transform: translateY(0.75rem);
+	opacity: 0;
+	transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+	pointer-events: none;
+}
+
+.is-style-mosaic.oogle-mosaic--captions > .wp-block-image:hover figcaption,
+.is-style-mosaic.oogle-mosaic--captions > .wp-block-image:focus-within figcaption {
+	opacity: 1;
+	transform: none;
+}
+
+@media (hover: none) {
+	.is-style-mosaic.oogle-mosaic--captions > .wp-block-image figcaption {
+		opacity: 1;
+		transform: none;
+	}
+}
