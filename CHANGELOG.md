@@ -5,6 +5,22 @@ Versioning: see docs/RELEASES.md.
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-09-16
+
+Purposeful motion and a custom-look form layer, driven by the Precision homepage redesign
+(Phase 2.5). Still one theme script; still zero jQuery of our own.
+
+### Added
+- `assets/js/reveal.js` (~1 KB script module): adds `is-visible` to elements carrying an `oogle-reveal*` class when they enter the viewport (IntersectionObserver). Registered on `init`, enqueued by a `render_block` check the first time such a class renders, so pages without reveals load no JS. Does nothing under `prefers-reduced-motion`; content is fully visible without JS because the hiding rules only apply once `<html>` has `oogle-js-reveal`.
+- Reveal CSS in `base.css`: `oogle-reveal` (fade/rise), `--clip` (wipe), `--left`, `--right`, `--stagger` (children, 80 ms steps). All transitions, all cancelled under reduced motion.
+- Image motion, CSS only: `oogle-zoom-hover` (restrained scale on hover/focus-within) and `oogle-drift` (scroll-driven `animation-timeline: view()` depth on full-bleed images; static where unsupported).
+- Gravity Forms "custom look" layer in `integrations/gravity-forms.css`: theme tokens for labels, inputs (`line` border, `primary-deep` focus ring), full-width accent submit, validation summary and field errors styled with the theme's own colours. Still low specificity; GF's own theme framework remains the base.
+- `text-wrap: balance` on headings and `text-wrap: pretty` on paragraphs, list items and captions (progressive).
+- Adjacent full-width sections inside post content (`.alignfull + .alignfull`) butt together: each section carries its own vertical padding, so no strip of page background appears between two tinted bands.
+
+### Changed
+- docs/JAVASCRIPT.md rewritten: "the default is none" became "the default is one small module, loaded only when used", with the reveal contract documented.
+
 ## [0.2.0] — 2026-09-16
 
 First real page built on the framework (Precision Kitchen & Bath homepage) and first

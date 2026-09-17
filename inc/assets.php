@@ -111,6 +111,44 @@ function oogle_enqueue_block_styles(): void {
 add_action( 'init', 'oogle_enqueue_block_styles' );
 
 /**
+ * Reveal module: registered always, enqueued only when a rendered block
+ * carries an "oogle-reveal" class (checked at render time, before wp_footer
+ * prints script modules). ~1 KB, deferred, no dependencies.
+ *
+ * @return void
+ */
+function oogle_register_reveal_module(): void {
+	wp_register_script_module(
+		'oogle-reveal',
+		OOGLE_URI . '/assets/js/reveal.js',
+		array(),
+		oogle_asset_version( 'assets/js/reveal.js' )
+	);
+}
+add_action( 'init', 'oogle_register_reveal_module' );
+
+/**
+ * Enqueue the reveal module the first time a block with an oogle-reveal class renders.
+ *
+ * @param string               $content Block HTML.
+ * @param array<string, mixed> $block   Parsed block.
+ * @return string
+ */
+function oogle_maybe_enqueue_reveal( string $content, array $block ): string {
+	static $done = false;
+	if ( $done || is_admin() ) {
+		return $content;
+	}
+	$class = $block['attrs']['className'] ?? '';
+	if ( is_string( $class ) && str_contains( $class, 'oogle-reveal' ) ) {
+		wp_enqueue_script_module( 'oogle-reveal' );
+		$done = true;
+	}
+	return $content;
+}
+add_filter( 'render_block', 'oogle_maybe_enqueue_reveal', 10, 2 );
+
+/**
  * Gravity Forms integration stylesheet.
  *
  * Loaded only when Gravity Forms is active AND a form is actually being

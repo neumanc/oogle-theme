@@ -21,6 +21,16 @@ body {
 	overflow-wrap: break-word;
 }
 
+/* Headings balance their lines (no one-word last line); body copy avoids
+   orphans where the engine supports it. Both are progressive, no fallback needed. */
+:where(h1, h2, h3, h4) {
+	text-wrap: balance;
+}
+
+:where(p, li, figcaption) {
+	text-wrap: pretty;
+}
+
 /* Full-height page so a short 404 still pushes the footer down. */
 body {
 	min-block-size: 100dvh;
@@ -49,6 +59,16 @@ main {
 
 :where(.is-style-section-reversed, .is-style-section-primary, .wp-block-cover) :where(a, button):focus-visible {
 	outline-color: var(--wp--preset--color--base);
+}
+
+/* ---- Full-width sections --------------------------------------------------- */
+
+/* A full-width section (Group or Cover with align "full") carries its own
+   vertical padding, so two of them in a row butt together instead of showing
+   a strip of page background between two tinted bands. Sections that want
+   air between them keep it by adding padding, not by relying on the gap. */
+:where(.wp-block-post-content) > .alignfull + .alignfull {
+	margin-block-start: 0;
 }
 
 /* ---- Skip link ------------------------------------------------------------ */
@@ -103,5 +123,97 @@ video {
 		animation-duration: 0.01ms !important;
 		animation-iteration-count: 1 !important;
 		transition-duration: 0.01ms !important;
+	}
+}
+
+/* ---- Reveal (progressive; JS adds .oogle-js-reveal and .is-visible) ----- */
+/* Without JS or with reduced motion, everything is simply visible.
+   Only opacity/transform/clip-path animate: no layout, no CLS. */
+
+.oogle-js-reveal [class*="oogle-reveal"]:not(.is-visible) {
+	opacity: 0;
+	transform: translateY(1.25rem);
+}
+
+.oogle-js-reveal .oogle-reveal--clip:not(.is-visible) {
+	transform: none;
+	clip-path: inset(0 0 100% 0);
+}
+
+.oogle-js-reveal .oogle-reveal--left:not(.is-visible) {
+	transform: translateX(-1.5rem);
+}
+
+.oogle-js-reveal .oogle-reveal--right:not(.is-visible) {
+	transform: translateX(1.5rem);
+}
+
+.oogle-js-reveal [class*="oogle-reveal"] {
+	transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), clip-path 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+	will-change: opacity, transform;
+}
+
+.oogle-js-reveal [class*="oogle-reveal"].is-visible {
+	opacity: 1;
+	transform: none;
+	clip-path: inset(0 0 0 0);
+	will-change: auto;
+}
+
+/* Stagger: children of a revealed container enter one after another. */
+.oogle-js-reveal .oogle-reveal--stagger > * {
+	opacity: 0;
+	transform: translateY(1rem);
+	transition: opacity 0.6s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.oogle-js-reveal .oogle-reveal--stagger.is-visible > * {
+	opacity: 1;
+	transform: none;
+}
+
+.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(2) { transition-delay: 0.08s; }
+.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(3) { transition-delay: 0.16s; }
+.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(4) { transition-delay: 0.24s; }
+.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(5) { transition-delay: 0.32s; }
+.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(6) { transition-delay: 0.40s; }
+
+/* ---- Image motion (CSS only) ------------------------------------------- */
+
+/* Hover: a restrained zoom on linked or gallery images. */
+.oogle-zoom-hover img {
+	transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.oogle-zoom-hover:hover img,
+.oogle-zoom-hover:focus-within img {
+	transform: scale(1.04);
+}
+
+/* Scroll-driven depth: a full-bleed image drifts slightly while it crosses
+   the viewport. Progressive: browsers without scroll-driven animations show
+   a static image. */
+@supports (animation-timeline: view()) {
+	.oogle-drift img {
+		animation: oogle-drift linear both;
+		animation-timeline: view();
+		animation-range: entry 0% exit 100%;
+		scale: 1.12;
+	}
+
+	@keyframes oogle-drift {
+		from { translate: 0 -5%; }
+		to   { translate: 0 5%; }
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.oogle-zoom-hover:hover img,
+	.oogle-zoom-hover:focus-within img,
+	.oogle-drift img {
+		transform: none;
+		animation: none;
+		scale: 1;
+		translate: 0;
 	}
 }

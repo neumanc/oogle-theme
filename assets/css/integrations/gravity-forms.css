@@ -67,3 +67,90 @@
 .gform_wrapper .gform_validation_errors {
 	color: #b3261e;
 }
+
+/* ---- Custom look on top of the GF theme framework --------------------------
+   Low specificity; GF's own variables above do most of the work. */
+
+.gform_wrapper.gravity-theme .gform_fields,
+.gform_wrapper.gform-theme--framework .gform_fields {
+	row-gap: var(--wp--preset--spacing--40);
+}
+
+.gform_wrapper .gfield_label,
+.gform_wrapper .gform-field-label {
+	font-size: var(--wp--preset--font-size--small);
+	font-weight: var(--wp--custom--font--weight--semibold);
+	color: var(--wp--preset--color--contrast);
+	margin-block-end: var(--wp--preset--spacing--10);
+}
+
+.gform_wrapper .gfield_required {
+	color: var(--wp--preset--color--muted);
+	font-weight: var(--wp--custom--font--weight--regular);
+}
+
+.gform_wrapper .gfield_description {
+	font-size: var(--wp--preset--font-size--x-small);
+	color: var(--wp--preset--color--muted);
+}
+
+.gform_wrapper :where(input:not([type=submit]):not([type=checkbox]):not([type=radio]):not([type=button]), select, textarea) {
+	border: 1px solid var(--wp--preset--color--line);
+	background: var(--wp--preset--color--base);
+	border-radius: var(--wp--custom--radius--sm);
+	padding: 0.8em 0.9em;
+	font: inherit;
+	color: var(--wp--preset--color--contrast);
+	transition: border-color var(--wp--custom--transition--fast), box-shadow var(--wp--custom--transition--fast);
+}
+
+.gform_wrapper :where(input, select, textarea):focus-visible {
+	outline: 2px solid var(--wp--preset--color--primary-deep);
+	outline-offset: 1px;
+	border-color: var(--wp--preset--color--primary-deep);
+}
+
+.gform_wrapper textarea {
+	min-block-size: 7rem;
+}
+
+.gform_wrapper .gform_footer,
+.gform_wrapper .gform-footer {
+	margin-block-start: var(--wp--preset--spacing--40);
+	padding: 0;
+}
+
+.gform_wrapper :where(input[type=submit], button[type=submit]) {
+	inline-size: 100%;
+	min-block-size: var(--wp--custom--target--min);
+	padding: 0.9em 1.4em;
+	border: 0;
+	border-radius: var(--wp--custom--radius--sm);
+	background: var(--wp--preset--color--accent);
+	color: var(--wp--preset--color--base);
+	font: inherit;
+	font-weight: var(--wp--custom--font--weight--semibold);
+	cursor: pointer;
+	transition: background-color var(--wp--custom--transition--base);
+}
+
+.gform_wrapper :where(input[type=submit], button[type=submit]):hover {
+	background: var(--wp--preset--color--accent-deep);
+}
+
+/* Validation: color plus text, never color alone. */
+.gform_wrapper .gfield_error :where(input, select, textarea) {
+	border-color: #b3261e;
+}
+
+.gform_wrapper .gform_validation_errors {
+	border: 1px solid #b3261e;
+	border-radius: var(--wp--custom--radius--sm);
+	padding: var(--wp--preset--spacing--30) var(--wp--preset--spacing--40);
+	background: #fbeeed;
+}
+
+.gform_wrapper .gform_confirmation_message {
+	font-size: var(--wp--preset--font-size--large);
+	padding: var(--wp--preset--spacing--40) 0;
+}

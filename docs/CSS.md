@@ -8,8 +8,9 @@
 2. **Per-block files** `assets/css/blocks/core-<block>.css`, attached with
    `wp_enqueue_block_style()`. Core loads them only when the block renders and inlines them
    when small. Map lives in `inc/assets.php` (filter `oogle/assets/block_styles`).
-3. **`assets/css/base.css`** — the only global sheet: focus ring, motion, element defaults,
-   header z-index. Keep under 5 KB.
+3. **`assets/css/base.css`** — the only global sheet: focus ring, motion (reduced-motion
+   guard, reveal, image motion), element defaults, header z-index, full-width section
+   adjacency. Keep under 8 KB.
 4. **`assets/css/integrations/`** — third-party mappings loaded only when the integration
    renders (Gravity Forms → its CSS custom properties).
 
@@ -50,10 +51,34 @@ beyond documented `wp-block-*` class names; utility classes.
 
 ## Budget
 
-Authored CSS in the parent: < 25 KB unminified (0.1.0: ~17 KB). Measure with `tools/payload.sh`.
+Authored front-end CSS in the parent (base + per-block files): < 25 KB unminified
+(0.1.0: ~17 KB; 0.3.0: ~21.8 KB). Integrations are budgeted separately (Gravity Forms:
+~5.8 KB, loaded only with a form). Measure with `tools/payload.sh`.
 
 ## Header collapse ranges (0.2.0)
 
 `.oogle-header` collapses the Navigation block below 1024px; add `oogle-header--collapse-lg`
 to the header Group to collapse below 1200px (seven links + phone + CTA need it). These are
 the only two ranges; if a menu still does not fit, shorten it.
+
+## Motion (0.3.0)
+
+Reveal classes (`oogle-reveal`, `--clip`, `--left`, `--right`, `--stagger`) are opt-in on
+any block and only take effect once `reveal.js` has added `oogle-js-reveal` to `<html>`
+(see docs/JAVASCRIPT.md). `oogle-zoom-hover` and `oogle-drift` are pure CSS. Every rule
+lives in `base.css`; a site never writes its own keyframes for these. Under
+`prefers-reduced-motion: reduce` all of it is cancelled by the one `!important` block.
+
+Rules of thumb: reveal sections and image grids, not every paragraph; one drift image per
+screen at most; hover zoom only on linked or lightboxed images; never move text on scroll.
+
+## Full-width sections (0.3.0)
+
+Two consecutive `alignfull` blocks inside post content have no gap between them (`base.css`
+sets `margin-block-start: 0` on `.alignfull + .alignfull`). Give every full-width section
+its own top and bottom padding; that is what separates content, not the root block gap.
+
+## Text wrapping (0.3.0)
+
+`text-wrap: balance` on `h1`–`h4`, `text-wrap: pretty` on `p`, `li`, `figcaption`.
+Progressive; do not add manual `<br>` to fix a widow.
