@@ -53,9 +53,8 @@ beyond documented `wp-block-*` class names; utility classes.
 
 ## Budget
 
-Authored front-end CSS in the parent (base + per-block files): < 28 KB unminified
-(0.1.0: ~17 KB; 0.3.0: ~21.8 KB; 0.4.0: ~25.7 KB, of which the rotator and mosaic captions
-are ~2.5 KB). Only base.css is a separate request; per-block files are inlined by core when
+Authored front-end CSS in the parent (base + per-block files): < 32 KB unminified
+(0.1.0: ~17 KB; 0.3.0: ~21.8 KB; 0.4.0: ~25.7 KB; 0.5.0: ~29 KB with four block styles for editorial pages). Only base.css is a separate request; per-block files are inlined by core when
 the block renders. Integrations are budgeted separately (Gravity Forms: ~6.5 KB, loaded only
 with a form). Measure with `tools/payload.sh`.
 
@@ -86,3 +85,16 @@ its own top and bottom padding; that is what separates content, not the root blo
 
 `text-wrap: balance` on `h1`–`h4`, `text-wrap: pretty` on `p`, `li`, `figcaption`.
 Progressive; do not add manual `<br>` to fix a widow.
+
+## Editorial page styles (0.5.0)
+
+Four block styles that let pages share a design language without sharing a layout:
+
+| Style | Block | Use |
+|---|---|---|
+| `section-head` | Group (flex, wrap, space-between, align bottom) with two inner Groups | Title left, intro + link right; the inner Groups get flex bases so they sit side by side |
+| `numbered` | Group (or List) | Each direct child gets "01, 02 …"; hairlines in `currentColor` so it reads on any surface; nested Groups keep their indent at 0,3,0 |
+| `inline` | Categories (Terms List, any taxonomy) | A pill filter row above a Query Loop; current term highlighted. `.oogle-filter-row a[aria-current]` styles a hand-written "All" link the same way |
+| `editorial` | Post Template (grid) | First item spans two columns from 1024 px; `.oogle-tile` on the inner Group for bare image/terms/title/excerpt items |
+
+Plus `.oogle-sticky` (sticky aside offset below the header) in `base.css`.

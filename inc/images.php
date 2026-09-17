@@ -75,6 +75,7 @@ function oogle_cover_lcp_attributes( string $content, array $block ): string {
 }
 add_filter( 'render_block_core/cover', 'oogle_cover_lcp_attributes', 10, 2 );
 add_filter( 'render_block_core/image', 'oogle_cover_lcp_attributes', 10, 2 );
+add_filter( 'render_block_core/post-featured-image', 'oogle_cover_lcp_attributes', 10, 2 );
 
 /**
  * Force lazy, low-priority loading for an image marked "oogle-defer".

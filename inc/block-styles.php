@@ -27,6 +27,8 @@ function oogle_register_block_styles(): void {
 		array( 'core/group', 'card',          __( 'Card', 'oogle' ) ),
 		array( 'core/group', 'card-flush',    __( 'Card (flush media)', 'oogle' ) ),
 		array( 'core/group', 'mosaic',        __( 'Mosaic (grid of images)', 'oogle' ) ),
+		array( 'core/group', 'section-head', __( 'Section head (title left, intro right)', 'oogle' ) ),
+		array( 'core/group', 'numbered',      __( 'Numbered (01, 02 … on each child)', 'oogle' ) ),
 		// "section-tint" and "section-reversed" are section styles defined in
 		// styles/*.json (theme.json partials) because they recolor nested
 		// headings, links and buttons — which JSON does safely and CSS cannot.
@@ -42,6 +44,10 @@ function oogle_register_block_styles(): void {
 		array( 'core/button', 'text',         __( 'Text link', 'oogle' ) ),
 		// Columns.
 		array( 'core/columns', 'reverse-on-stack', __( 'Reverse when stacked', 'oogle' ) ),
+		// Terms list (Categories block with any taxonomy).
+		array( 'core/categories', 'inline',   __( 'Inline (filter row)', 'oogle' ) ),
+		// Post template (Query Loop).
+		array( 'core/post-template', 'editorial', __( 'Editorial grid (first item large)', 'oogle' ) ),
 	);
 
 	/**

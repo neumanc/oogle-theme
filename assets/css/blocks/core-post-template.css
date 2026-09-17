@@ -17,3 +17,55 @@
 .wp-block-post-template .wp-block-post-title a:hover {
 	text-decoration: underline;
 }
+
+/* ---- Editorial grid: the first item spans two columns on wide screens ------
+   For portfolio-style loops where the newest item deserves the feature slot.
+   Works with the Post Template's own grid layout (minimumColumnWidth); this
+   only changes the first item's span where three or more columns fit. */
+@media (min-width: 1024px) {
+	.wp-block-post-template.is-style-editorial > li:first-child {
+		grid-column: span 2;
+	}
+}
+
+/* Bare (non-card) items: image, then terms, title, excerpt with no box. */
+.wp-block-post-template .oogle-tile {
+	display: flex;
+	flex-direction: column;
+	gap: var(--wp--preset--spacing--30);
+}
+
+.wp-block-post-template .oogle-tile .wp-block-post-featured-image {
+	margin: 0;
+	overflow: clip;
+	border-radius: var(--wp--custom--radius--md);
+}
+
+.wp-block-post-template .oogle-tile .wp-block-post-featured-image img {
+	transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.wp-block-post-template .oogle-tile:has(a:hover) .wp-block-post-featured-image img,
+.wp-block-post-template .oogle-tile:has(a:focus-visible) .wp-block-post-featured-image img {
+	transform: scale(1.04);
+}
+
+.wp-block-post-template .oogle-tile .wp-block-post-terms {
+	font-size: var(--wp--preset--font-size--x-small);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	font-weight: var(--wp--custom--font--weight--semibold);
+	color: var(--wp--preset--color--primary-deep);
+}
+
+.wp-block-post-template .oogle-tile .wp-block-post-terms a {
+	text-decoration: none;
+	color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wp-block-post-template .oogle-tile .wp-block-post-featured-image img {
+		transition: none;
+		transform: none;
+	}
+}

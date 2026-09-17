@@ -1,0 +1,52 @@
+/* core/categories (Terms List) — block style: inline (filter row) */
+
+/* A row of term links, used as server-rendered filters above a Query Loop.
+   Pair it with a "All" link in the pattern; the block itself lists non-empty
+   terms of the taxonomy it is given. */
+.wp-block-categories.is-style-inline {
+	list-style: none;
+	padding-inline-start: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--wp--preset--spacing--20);
+}
+
+.wp-block-categories.is-style-inline > li {
+	margin: 0;
+}
+
+.wp-block-categories.is-style-inline a,
+.oogle-filter-row a {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: 2.5rem;
+	padding: 0.35em 1em;
+	border: 1px solid var(--wp--preset--color--line);
+	border-radius: var(--wp--custom--radius--full);
+	text-decoration: none;
+	color: var(--wp--preset--color--contrast);
+	font-size: var(--wp--preset--font-size--small);
+	font-weight: var(--wp--custom--font--weight--medium);
+	transition: background-color var(--wp--custom--transition--fast), border-color var(--wp--custom--transition--fast);
+}
+
+.wp-block-categories.is-style-inline a:hover,
+.oogle-filter-row a:hover {
+	border-color: var(--wp--preset--color--contrast);
+	text-decoration: none;
+}
+
+.wp-block-categories.is-style-inline .current-cat > a,
+.oogle-filter-row a[aria-current] {
+	background: var(--wp--preset--color--contrast);
+	border-color: var(--wp--preset--color--contrast);
+	color: var(--wp--preset--color--base);
+}
+
+/* Post counts, if enabled, sit quietly after the label. */
+.wp-block-categories.is-style-inline .wp-block-categories__post-count,
+.wp-block-categories.is-style-inline a + span {
+	color: var(--wp--preset--color--muted);
+	font-size: var(--wp--preset--font-size--x-small);
+	margin-inline-start: 0.4em;
+}

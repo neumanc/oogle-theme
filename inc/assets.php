@@ -77,6 +77,7 @@ function oogle_block_styles_map(): array {
 		'core/accordion'        => 'core-accordion.css',
 		'core/post-template'    => 'core-post-template.css',
 		'core/breadcrumbs'      => 'core-breadcrumbs.css',
+		'core/categories'       => 'core-categories.css',
 	);
 
 	/**

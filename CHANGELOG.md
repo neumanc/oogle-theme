@@ -5,6 +5,28 @@ Versioning: see docs/RELEASES.md.
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-09-17
+
+Phase 3 of the Precision site: nine core pages built on the framework. Four block
+styles were promoted from site CSS because a second page needed them.
+
+### Added
+- Group style `section-head`: title on the left, intro and link on the right (flex Group with
+  two inner Groups; without it the inner constrained Groups shrink-wrap and wrap).
+- Group style `numbered`: each direct child gets "01, 02 …" in the heading font with
+  hairlines in the current text colour; the indent is restated at 0,3,0 for nested Groups
+  because core zeroes side padding on nested constrained Groups.
+- Categories (Terms List) style `inline`: a filter row of pill links for any taxonomy, with
+  the current term highlighted; `.oogle-filter-row a[aria-current]` for a hand-written "All"
+  link beside it. New per-block file `core-categories.css`.
+- Post Template style `editorial`: the first item spans two columns from 1024 px; plus
+  `.oogle-tile` for bare image/terms/title/excerpt items with a hover zoom.
+- `.oogle-sticky`: a sticky aside offset below the header (photo beside a long list).
+- `oogle-lcp` now also applies to `core/post-featured-image` (single templates).
+
+### Changed
+- Nothing in existing styles. `base.css` + block files: ~29 KB.
+
 ## [0.4.0] — 2026-09-17
 
 Second pass of the Precision homepage (Phase 2.5): a rotating hero, a dark header, and

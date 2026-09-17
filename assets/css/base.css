@@ -118,6 +118,15 @@ video {
 	border-block-end: 1px solid color-mix(in srgb, currentColor 14%, transparent);
 }
 
+/* ---- Sticky aside ----------------------------------------------------------- */
+/* An element that stays in view while its taller sibling column scrolls past
+   (a photo beside a long list, a heading beside its stages). Offset clears the
+   sticky header. Needs a containing block taller than itself; harmless otherwise. */
+.oogle-sticky {
+	position: sticky;
+	top: calc(var(--wp--preset--spacing--60) + 4rem);
+}
+
 /* ---- Reduced motion --------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
