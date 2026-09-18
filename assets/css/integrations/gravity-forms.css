@@ -25,7 +25,7 @@
 	--gf-color-primary-lighter: var(--wp--preset--color--accent-tint) !important;
 	--gf-color-secondary: var(--wp--preset--color--surface) !important;
 	--gf-color-secondary-contrast: var(--wp--preset--color--contrast) !important;
-	--gf-color-in-error: #b3261e !important;
+	--gf-color-in-error: var(--wp--custom--color--error) !important;
 	--gf-color-in-error-contrast: var(--wp--preset--color--base) !important;
 	--gf-font-size-primary: var(--wp--preset--font-size--medium) !important;
 	--gf-font-size-secondary: var(--wp--preset--font-size--small) !important;
@@ -35,7 +35,6 @@
 	--gf-ctrl-label-color-primary: var(--wp--preset--color--contrast) !important;
 	--gf-ctrl-label-color-secondary: var(--wp--preset--color--muted) !important;
 	--gf-ctrl-desc-color: var(--wp--preset--color--muted) !important;
-	--gf-ctrl-border-color-focus: var(--wp--preset--color--primary-deep) !important;
 	--gf-ctrl-btn-bg-color-primary: var(--wp--preset--color--accent) !important;
 	--gf-ctrl-btn-bg-color-hover-primary: var(--wp--preset--color--accent-deep) !important;
 	--gf-ctrl-btn-color-primary: var(--wp--preset--color--base) !important;
@@ -49,36 +48,9 @@
 	--gf-ctrl-shadow-focus: 0 0 0 2px var(--wp--preset--color--base), 0 0 0 4px var(--wp--preset--color--primary-deep) !important;
 }
 
-/* Legacy (pre-framework) rendering: minimal, low-specificity fallbacks. */
-.gform_wrapper :where(input:not([type=submit]):not([type=checkbox]):not([type=radio]), select, textarea) {
-	inline-size: 100%;
-	border: 1px solid var(--wp--preset--color--muted);
-	border-radius: var(--wp--custom--radius--sm);
-	padding: 0.6em 0.8em;
-	font: inherit;
-	background: var(--wp--preset--color--base);
-	color: var(--wp--preset--color--contrast);
-}
-
-.gform_wrapper :where(input[type=submit], button[type=submit]) {
-	min-block-size: var(--wp--custom--target--min);
-	padding: 0.8em 1.4em;
-	border: 0;
-	border-radius: var(--wp--custom--radius--sm);
-	background: var(--wp--preset--color--accent);
-	color: var(--wp--preset--color--base);
-	font: inherit;
-	font-weight: var(--wp--custom--font--weight--semibold);
-	cursor: pointer;
-}
-
-.gform_wrapper .validation_message,
-.gform_wrapper .gform_validation_errors {
-	color: #b3261e;
-}
-
 /* ---- Custom look on top of the GF theme framework --------------------------
-   Low specificity; GF's own variables above do most of the work. */
+   Low specificity; GF's own variables above do most of the work. These rules
+   also serve as the fallback for the legacy (pre-framework) rendering. */
 
 .gform_wrapper.gravity-theme .gform_fields,
 .gform_wrapper.gform-theme--framework .gform_fields {
@@ -104,6 +76,7 @@
 }
 
 .gform_wrapper :where(input:not([type=submit]):not([type=checkbox]):not([type=radio]):not([type=button]), select, textarea) {
+	inline-size: 100%;
 	border: 1px solid var(--wp--preset--color--line);
 	background: var(--wp--preset--color--base);
 	border-radius: var(--wp--custom--radius--sm);
@@ -158,15 +131,20 @@
 }
 
 /* Validation: color plus text, never color alone. */
+.gform_wrapper .validation_message,
+.gform_wrapper .gform_validation_errors {
+	color: var(--wp--custom--color--error);
+}
+
 .gform_wrapper .gfield_error :where(input, select, textarea) {
-	border-color: #b3261e;
+	border-color: var(--wp--custom--color--error);
 }
 
 .gform_wrapper .gform_validation_errors {
-	border: 1px solid #b3261e;
+	border: 1px solid var(--wp--custom--color--error);
 	border-radius: var(--wp--custom--radius--sm);
 	padding: var(--wp--preset--spacing--30) var(--wp--preset--spacing--40);
-	background: #fbeeed;
+	background: color-mix(in srgb, var(--wp--custom--color--error) 8%, var(--wp--preset--color--base));
 }
 
 .gform_wrapper .gform_confirmation_message {

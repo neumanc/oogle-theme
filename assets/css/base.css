@@ -1,9 +1,14 @@
 /**
  * Oogle — base stylesheet (front end).
  *
- * The ONLY global stylesheet. Everything that can live in theme.json does;
- * everything block-specific lives in blocks/*.css and loads per block.
- * Rules here: focus, skip link, motion, a handful of element defaults.
+ * The ONLY global stylesheet, loaded on the front end and in the editor
+ * canvas (see inc/setup.php; editor.css undoes the three document-level
+ * rules there). Everything that can live in theme.json does; everything
+ * block-specific lives in blocks/*.css and loads per block; the reveal and
+ * rotator modules carry their own stylesheets (reveal.css, rotator.css),
+ * enqueued with the module.
+ * Rules here: document, focus, targets, media, header, sticky aside,
+ * reduced motion, CSS-only image motion.
  * Specificity: single class or element + pseudo-class. No IDs. One !important
  * (reduced motion), documented.
  */
@@ -11,14 +16,18 @@
 /* ---- Document ---------------------------------------------------------- */
 
 html {
-	-webkit-text-size-adjust: 100%;
+	-webkit-text-size-adjust: 100%; /* Still prefix-only in Safari. */
 	scroll-behavior: smooth;
 }
 
+/* Full-height flex column so a short 404 still pushes the footer down. */
 body {
 	-webkit-font-smoothing: antialiased;
 	text-rendering: optimizeLegibility;
 	overflow-wrap: break-word;
+	min-block-size: 100dvh;
+	display: flex;
+	flex-direction: column;
 }
 
 /* Headings balance their lines (no one-word last line); body copy avoids
@@ -31,12 +40,6 @@ body {
 	text-wrap: pretty;
 }
 
-/* Full-height page so a short 404 still pushes the footer down. */
-body {
-	min-block-size: 100dvh;
-	display: flex;
-	flex-direction: column;
-}
 
 .wp-site-blocks {
 	display: flex;
@@ -144,75 +147,6 @@ video {
 	}
 }
 
-/* ---- Reveal (progressive; JS adds .oogle-js-reveal and .is-visible) ----- */
-/* Without JS or with reduced motion, everything is simply visible.
-   Only opacity/transform/clip-path animate: no layout, no CLS. */
-
-.oogle-js-reveal [class*="oogle-reveal"]:not(.is-visible) {
-	opacity: 0;
-	transform: translateY(1.25rem);
-}
-
-.oogle-js-reveal .oogle-reveal--clip:not(.is-visible) {
-	transform: none;
-}
-
-/* The clip goes on the image, not on the observed element: a clip-path on
-   the observed element itself gives IntersectionObserver an empty
-   intersection rect, so the reveal would never fire (found in 0.3.0). */
-.oogle-js-reveal .oogle-reveal--clip img {
-	clip-path: inset(0 0 0 0);
-	transition: clip-path 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-.oogle-js-reveal .oogle-reveal--clip:not(.is-visible) img {
-	clip-path: inset(0 0 100% 0);
-}
-
-.oogle-js-reveal .oogle-reveal--left:not(.is-visible) {
-	transform: translateX(-1.5rem);
-}
-
-.oogle-js-reveal .oogle-reveal--right:not(.is-visible) {
-	transform: translateX(1.5rem);
-}
-
-/* Photos settle into place: a small scale-down instead of a slide. */
-.oogle-js-reveal .oogle-reveal--scale:not(.is-visible) {
-	transform: scale(1.04);
-}
-
-.oogle-js-reveal [class*="oogle-reveal"] {
-	transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
-	will-change: opacity, transform;
-}
-
-.oogle-js-reveal [class*="oogle-reveal"].is-visible {
-	opacity: 1;
-	transform: none;
-	will-change: auto;
-}
-
-/* Stagger: children of a revealed container enter one after another. */
-.oogle-js-reveal .oogle-reveal--stagger > * {
-	opacity: 0;
-	transform: translateY(1rem);
-	transition: opacity 0.6s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-.oogle-js-reveal .oogle-reveal--stagger.is-visible > * {
-	opacity: 1;
-	transform: none;
-}
-
-.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(2) { transition-delay: 0.08s; }
-.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(3) { transition-delay: 0.16s; }
-.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(4) { transition-delay: 0.24s; }
-.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(5) { transition-delay: 0.32s; }
-.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(6) { transition-delay: 0.40s; }
-.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(7) { transition-delay: 0.48s; }
-.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(8) { transition-delay: 0.56s; }
-
 /* ---- Image motion (CSS only) ------------------------------------------- */
 
 /* Hover: a restrained zoom on linked or gallery images. */
@@ -239,73 +173,6 @@ video {
 	@keyframes oogle-drift {
 		from { translate: 0 -5%; }
 		to   { translate: 0 5%; }
-	}
-}
-
-/* ---- Rotator (assets/js/rotator.js) ------------------------------------ */
-/* A positioned box whose children are stacked, cover-fitted images. Without
-   the script only the first child is displayed; the script queues the others
-   one at a time (so their lazy images load) and crossfades them on top. The
-   incoming slide fades in OVER the current one, which stays fully opaque
-   underneath until the fade ends, so the photo never dips to dark mid-fade. */
-.oogle-rotator {
-	position: relative;
-	overflow: clip;
-	isolation: isolate;
-}
-
-.oogle-rotator > * {
-	position: absolute;
-	inset: 0;
-	margin: 0;
-	opacity: 0;
-	z-index: 0;
-}
-
-.oogle-rotator > :not(:first-child):not(.is-queued) {
-	display: none;
-}
-
-.oogle-rotator > * img {
-	display: block;
-	inline-size: 100%;
-	block-size: 100%;
-	object-fit: cover;
-	border-radius: 0;
-	transform: scale(1.08);
-	transform-origin: 50% 60%;
-}
-
-.oogle-rotator > :first-child,
-.oogle-rotator > .is-shown {
-	opacity: 1;
-	z-index: 2;
-}
-
-.oogle-rotator > .is-shown {
-	transition: opacity 1.7s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.oogle-rotator > .is-shown img,
-.oogle-rotator > .is-under img {
-	transform: scale(1);
-	transition: transform 8.4s linear; /* HOLD + FADE: settles over the whole hold */
-}
-
-.oogle-rotator > .is-under {
-	opacity: 1;
-	z-index: 1;
-}
-
-/* Once the script runs (is-active), the first slide is treated like any other. */
-.oogle-rotator.is-active > :first-child:not(.is-shown):not(.is-under) {
-	opacity: 0;
-	z-index: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.oogle-rotator > * img {
-		transform: none;
 	}
 }
 

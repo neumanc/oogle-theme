@@ -33,9 +33,14 @@
 
 	<!-- wp:group {"align":"wide","style":{"spacing":{"padding":{"top":"var:preset|spacing|40"}},"border":{"top":{"color":"var:preset|color|line","width":"1px"}}},"layout":{"type":"flex","flexWrap":"wrap","justifyContent":"space-between"}} -->
 	<div class="wp-block-group alignwide" style="border-top-color:var(--wp--preset--color--line);border-top-width:1px;padding-top:var(--wp--preset--spacing--40)">
-		<!-- wp:paragraph {"fontSize":"x-small"} -->
-		<p class="has-x-small-font-size">© <a href="/">Site name</a>. All rights reserved.</p>
-		<!-- /wp:paragraph -->
+		<!-- wp:group {"style":{"spacing":{"blockGap":"var:preset|spacing|10"}},"layout":{"type":"flex","flexWrap":"wrap"}} -->
+		<div class="wp-block-group">
+			<!-- wp:paragraph {"fontSize":"x-small"} -->
+			<p class="has-x-small-font-size">©</p>
+			<!-- /wp:paragraph -->
+			<!-- wp:site-title {"level":0,"fontSize":"x-small","style":{"typography":{"fontWeight":"400"}}} /-->
+		</div>
+		<!-- /wp:group -->
 		<!-- wp:paragraph {"fontSize":"x-small"} -->
 		<p class="has-x-small-font-size"><a href="/privacy-policy/">Privacy</a> · <a href="/accessibility-statement/">Accessibility</a></p>
 		<!-- /wp:paragraph -->

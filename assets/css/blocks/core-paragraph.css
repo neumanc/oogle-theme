@@ -1,10 +1,11 @@
 /* core/paragraph — the eyebrow and lead styles themselves live in theme.json
    (styles.blocks.core/paragraph.variations) so section styles can recolor them.
-   Only the prose measure needs CSS. */
 
-.is-layout-constrained > .wp-block-paragraph:not(.has-text-align-center) {
-	max-inline-size: var(--wp--custom--measure--prose);
-}
+   There is deliberately no per-paragraph prose measure here. Core's constrained
+   layout centres every child with auto margins (!important), so a paragraph
+   narrower than the content width becomes a centred box whose left edge moves
+   with its font size (lead, eyebrow and body copy each landed on a different
+   edge — found in the 1.0 audit). The measure is the layout's contentSize. */
 
 /* Section styles (styles/*.json) cannot target block-style variations of
    nested blocks — core does not emit those rules (verified on 7.1). So the

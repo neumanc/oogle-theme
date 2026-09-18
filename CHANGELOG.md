@@ -5,6 +5,80 @@ Versioning: see docs/RELEASES.md.
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-09-17
+
+Release-gate audit of the whole theme (code, architecture, security, performance,
+accessibility, compatibility, packaging) before it becomes the parent of a second client
+site. No breaking change: every slug, block style, pattern, part, template, class and
+filter from 0.5.0 is kept.
+
+### Added
+- `inc/updates.php`: updates from GitHub Releases through WordPress's own `Update URI` /
+  `update_themes_github.com` mechanism — latest non-draft, non-prerelease Release, asset
+  named `oogle-theme.zip`, requirements read from the tagged `style.css`, 6 h cache (1 h
+  after a failure), extracted folder renamed to the theme directory if needed. Filters
+  `oogle/updates/enabled`, `oogle/updates/request_args`, `oogle/updates/api_url`,
+  `oogle/updates/style_url`. Public repositories only; no secret bundled.
+- `parts/comments.html` (core Comments block: list, pagination, form) in `single.html`.
+  Renders nothing when comments are closed and none exist.
+- Patterns `oogle/hero-split` (text + `oogle-lcp` image, the hero for photos under ~1600px)
+  and `oogle/faq` (core Accordion). Hidden patterns `oogle/hidden-404`,
+  `oogle/hidden-blog-heading`, `oogle/hidden-no-results` so template copy is translatable.
+- `settings.custom.color.error` token (`--wp--custom--color--error`), used by the Gravity
+  Forms mapping instead of hard-coded hex. A custom token rather than a palette entry so
+  existing children inherit it.
+- `load_theme_textdomain( 'oogle' )`.
+- `LICENSE` (GPL-2.0-or-later), `AGENTS.md`, `CONTRIBUTING.md`, `SECURITY.md`, `UPGRADE.md`,
+  `.distignore`, GitHub Actions `ci.yml` (lint, phpcs, compatibility, JSON, modules,
+  client-leak grep, archive dry run) and `release.yml` (tag → reproducible zip + SHA-256 →
+  GitHub Release).
+
+### Changed
+- `base.css` is now also loaded in the editor canvas (`add_editor_style`), followed by
+  `editor.css`, which undoes the three document-level layout rules. Button targets,
+  section adjacency, text wrapping and the header hairline now match between editor and
+  front end (the editor previously rendered buttons with no minimum height).
+- Reveal and rotator CSS moved out of `base.css` into `assets/css/reveal.css` and
+  `assets/css/rotator.css`, enqueued with their modules (script-module map entries gained a
+  `style` key). `base.css` shrank from 9.6 KB to 5.5 KB; pages without motion load less.
+- Blog index (`index.html`) has an H1 ("Blog", hidden pattern) — it had none, because the
+  Query Title block renders nothing on the posts page. `404.html` and `search.html` copy
+  moved to hidden patterns / core defaults for translation.
+- Lightbox setting moved to `settings.blocks.core/image.lightbox` (`enabled: false`,
+  `allowEditing: true`): the root-level `enabled: true` never applied on WordPress 7.x
+  because core's block-level `allowEditing` shadows it. Behaviour is unchanged (opt-in per
+  image); the setting now says what it does.
+- `cards-grid` and `testimonials` grids use a 20rem minimum column so three cards fill the
+  wide width instead of leaving an empty fourth track.
+- Footer copyright line uses the Site Title block instead of a literal "Site name".
+- `numbered` Group style uses `decimal-leading-zero` so item 10 reads "10", not "010".
+- `OOGLE_VERSION` reads the version via `get_template()` instead of a hard-coded directory name.
+- Gravity Forms stylesheet: removed a duplicated custom property and the legacy fallback
+  block that the custom-look rules fully overrode (7.2 KB → 6.6 KB, same rendered result).
+- phpcs: formatting normalised with `phpcbf`; the hook-name underscore sniff is excluded with
+  a documented reason (slash-namespaced `oogle/*` filters are public API).
+- Documentation rewritten for 1.0.0 (README, RELEASES, CSS, JAVASCRIPT, ARCHITECTURE,
+  PATTERNS, TOKENS, ACCESSIBILITY, INSTALLATION, CHILD-THEMES, WORDPRESS-NOTES); no client
+  site is named anywhere in the parent outside this changelog's history.
+
+### Fixed
+- Paragraphs inside constrained layouts were each rendered as a centred box of their own
+  width: the 68ch `max-inline-size` combined with core's `margin-inline: auto !important`
+  put body copy, lead and eyebrow paragraphs on three different left edges, and body copy
+  at 68ch was wider than `contentSize`. The rule is removed; the measure is the layout's
+  content width.
+- Breadcrumbs used `white-space: nowrap`, so a long current-page title widened the page on
+  phones (horizontal scroll at 320–412px). Crumbs now wrap.
+- `reveal.js`: an element taller than roughly eight viewports could never reach the 12%
+  intersection ratio and stayed invisible. Elements at least half a viewport tall now reveal
+  as soon as they enter.
+- `rotator.js`: a `visibilitychange` during an image decode could start a second crossfade
+  concurrently; guarded.
+
+### Removed
+- Nothing public. Root-level `settings.lightbox` (ineffective) and the paragraph measure
+  rule (defective) as described above.
+
 ## [0.5.0] — 2026-09-17
 
 Phase 3 of the Precision site: nine core pages built on the framework. Four block

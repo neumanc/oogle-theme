@@ -1,12 +1,14 @@
 /* core/navigation — desktop spacing, submenus, overlay (mobile) */
 
-/* Horizontal navs (header) get a 44px target. Vertical lists (footer) keep
-   their natural rhythm; 2.5.8 needs 24px and the line-height already gives it. */
+/* Horizontal navs (header) get a 44px target and never break mid-label.
+   Vertical lists (footer) keep their natural rhythm; 2.5.8 needs 24px and the
+   line-height already gives it. */
 .wp-block-navigation:not(.is-vertical) .wp-block-navigation-item__content {
 	padding-block: 0.5em;
 	min-block-size: var(--wp--custom--target--min);
 	display: inline-flex;
 	align-items: center;
+	white-space: nowrap;
 }
 
 /* Submenu panel. */
@@ -50,11 +52,6 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-}
-
-/* Links never break mid-label. */
-.wp-block-navigation:not(.is-vertical) .wp-block-navigation-item__content {
-	white-space: nowrap;
 }
 
 /* ---- The theme's one deliberate breakpoint override ----------------------

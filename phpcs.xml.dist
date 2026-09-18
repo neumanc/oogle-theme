@@ -6,8 +6,15 @@
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
 	<arg name="extensions" value="php"/>
 	<arg value="ps"/>
-	<rule ref="WordPress-Extra"/>
-	<rule ref="WordPress-Docs"/>
+	<rule ref="WordPress-Extra">
+		<!-- Hook names use the slash namespace convention (oogle/assets/block_styles). They are
+		     part of the theme's public API since 0.1.0; renaming them would be a breaking change. -->
+		<exclude name="WordPress.NamingConventions.ValidHookName.UseUnderscores"/>
+	</rule>
+	<rule ref="WordPress-Docs">
+		<!-- Pattern files keep a blank line between the header block and the closing PHP tag. -->
+		<exclude name="Squiz.Commenting.FileComment.SpacingAfterComment"/>
+	</rule>
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<properties>
 			<property name="prefixes" type="array"><element value="oogle"/></property>

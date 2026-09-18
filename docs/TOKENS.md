@@ -55,9 +55,12 @@ use `alignfull` with an inner constrained group when a section needs more.
 
 ## Custom (`settings.custom`) → `--wp--custom--{group}--{name}`
 
-`radius.{sm,md,lg,full}` · `border.width` · `measure.prose` (68ch) · `section.{tight,base,loose}`
-(fluid section padding) · `transition.{fast,base}` · `font.weight.*` · `target.min` (44px) ·
-`z.{header,overlay}`.
+`color.error` (form validation; a custom token rather than a palette entry so a child that
+does not override it inherits it — `settings.custom` merges, preset arrays replace) ·
+`radius.{sm,md,lg,full}` · `border.width` · `measure.prose` (68ch; available to children,
+not applied by the parent since 1.0.0 — see CSS.md) · `section.{tight,base,loose}` (fluid
+section padding) · `transition.{fast,base}` · `font.weight.*` · `target.min` (44px) ·
+`z.{header,overlay}` (`overlay` is reserved; core's own overlay uses its own z-index).
 
 ## Shadows (`settings.shadow.presets`) → `--wp--preset--shadow--{sm|md|lg}`
 

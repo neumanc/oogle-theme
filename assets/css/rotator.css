@@ -1,0 +1,69 @@
+/**
+ * Oogle — rotator module styles (assets/js/rotator.js).
+ *
+ * Enqueued by inc/assets.php whenever a block carries the "oogle-rotator"
+ * class, whether or not the script runs: this file also defines the no-script
+ * state (only the first slide is displayed). Not loaded in the editor, where
+ * the slides are edited as an ordinary stack of Image blocks.
+ */
+
+.oogle-rotator {
+	position: relative;
+	overflow: clip;
+	isolation: isolate;
+}
+
+.oogle-rotator > * {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	opacity: 0;
+	z-index: 0;
+}
+
+.oogle-rotator > :not(:first-child):not(.is-queued) {
+	display: none;
+}
+
+.oogle-rotator > * img {
+	display: block;
+	inline-size: 100%;
+	block-size: 100%;
+	object-fit: cover;
+	border-radius: 0;
+	transform: scale(1.08);
+	transform-origin: 50% 60%;
+}
+
+.oogle-rotator > :first-child,
+.oogle-rotator > .is-shown {
+	opacity: 1;
+	z-index: 2;
+}
+
+.oogle-rotator > .is-shown {
+	transition: opacity 1.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.oogle-rotator > .is-shown img,
+.oogle-rotator > .is-under img {
+	transform: scale(1);
+	transition: transform 8.4s linear; /* HOLD + FADE: settles over the whole hold */
+}
+
+.oogle-rotator > .is-under {
+	opacity: 1;
+	z-index: 1;
+}
+
+/* Once the script runs (is-active), the first slide is treated like any other. */
+.oogle-rotator.is-active > :first-child:not(.is-shown):not(.is-under) {
+	opacity: 0;
+	z-index: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.oogle-rotator > * img {
+		transform: none;
+	}
+}

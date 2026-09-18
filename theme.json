@@ -113,10 +113,6 @@
 			"allowEditing": true,
 			"allowCustomContentAndWideSize": false
 		},
-		"lightbox": {
-			"enabled": true,
-			"allowEditing": true
-		},
 		"position": {
 			"sticky": true
 		},
@@ -306,6 +302,9 @@
 			]
 		},
 		"custom": {
+			"color": {
+				"error": "#b3261e"
+			},
 			"radius": {
 				"sm": "4px",
 				"md": "8px",
@@ -350,6 +349,12 @@
 				},
 				"shadow": {
 					"defaultPresets": false
+				}
+			},
+			"core/image": {
+				"lightbox": {
+					"enabled": false,
+					"allowEditing": true
 				}
 			},
 			"core/pullquote": {
@@ -789,6 +794,11 @@
 		{
 			"name": "post-meta",
 			"title": "Post meta",
+			"area": "uncategorized"
+		},
+		{
+			"name": "comments",
+			"title": "Comments",
 			"area": "uncategorized"
 		},
 		{

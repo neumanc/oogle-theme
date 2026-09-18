@@ -1,13 +1,20 @@
 /**
  * Oogle — editor-only corrections.
- * theme.json and blocks/*.css already apply inside the editor canvas; this
- * file only fixes the few places the canvas differs from the front end.
+ * theme.json, base.css and blocks/*.css already apply inside the editor
+ * canvas; this file only fixes the few places the canvas differs from the
+ * front end. Loaded after base.css (see inc/setup.php).
  */
+
+/* base.css lays the document out as a flex column so a short page still pushes
+   the footer down. Core rewrites html/body selectors to .editor-styles-wrapper
+   when it loads editor styles; inside the canvas that layout is meaningless. */
+.editor-styles-wrapper {
+	display: block;
+	min-block-size: auto;
+	scroll-behavior: auto;
+}
 
 /* Make the sticky header non-sticky while editing so it never covers blocks. */
 .editor-styles-wrapper .oogle-header {
 	position: static !important; /* Editor-only; core sets position inline. */
 }
-
-/* Placeholder eyebrow/lead styles need the same treatment as front end; they
-   come from blocks/core-paragraph.css which core also loads here. */

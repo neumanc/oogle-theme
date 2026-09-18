@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    name: Lint (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer, cs2pr
+          coverage: none
+
+      - name: PHP syntax
+        run: |
+          set -e
+          find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+
+      - name: Install coding-standards tooling (dev only)
+        run: |
+          composer global config --no-plugins allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
+          composer global require --no-interaction --quiet \
+            wp-coding-standards/wpcs:^3.1 \
+            phpcompatibility/phpcompatibility-wp:^2.1 \
+            dealerdirect/phpcodesniffer-composer-installer:^1.0
+
+      - name: PHPCS (WordPress Coding Standards)
+        run: ~/.composer/vendor/bin/phpcs --standard=phpcs.xml.dist --report=checkstyle | cs2pr
+
+      - name: PHPCompatibility 8.1+
+        run: ~/.composer/vendor/bin/phpcs --standard=PHPCompatibilityWP --runtime-set testVersion 8.1- --extensions=php -p .
+
+      - name: JSON
+        run: |
+          for f in theme.json styles/*.json; do jq -e . "$f" >/dev/null && echo "ok $f"; done
+
+      - name: JavaScript modules parse
+        run: |
+          for f in assets/js/*.js; do cp "$f" /tmp/check.mjs && node --check /tmp/check.mjs && echo "ok $f"; done
+
+      - name: No client-specific strings in the parent
+        run: |
+          ! grep -rniE 'precision|precisionkb|kissimmee|gohighlevel' --exclude-dir=.git --exclude=CHANGELOG.md --exclude-dir=.github --exclude=AGENTS.md . || (echo 'Client-specific reference found in the parent theme' && exit 1)
+
+  package:
+    name: Build release archive (dry run)
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - name: git archive
+        run: |
+          git archive --format=zip --prefix=oogle-theme/ HEAD -o oogle-theme.zip
+          unzip -l oogle-theme.zip
+          ! unzip -l oogle-theme.zip | grep -E 'docs/|tools/|\.github/|phpcs\.xml|AGENTS\.md' || (echo 'Dev files leaked into the archive' && exit 1)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: oogle-theme-dry-run
+          path: oogle-theme.zip
+          retention-days: 7

@@ -4,15 +4,16 @@
  *
  * Strategy (docs/CSS.md):
  *  - theme.json generates global styles (inline, both contexts).
- *  - base.css is the only global stylesheet: focus, skip link, motion, a few
- *    element rules that theme.json cannot express. Kept tiny.
+ *  - base.css is the only global stylesheet: focus, targets, a few element
+ *    rules that theme.json cannot express. Kept tiny; also loaded in the
+ *    editor canvas (inc/setup.php).
  *  - Everything else is attached to a specific core block with
  *    wp_enqueue_block_style(), so it loads only on pages rendering that block
  *    and is inlined by core when small.
  *  - JavaScript is limited to small progressive-enhancement script modules
- *    (reveal, rotator) enqueued only when a block asks for them; core's
- *    Interactivity API modules (navigation overlay, accordion, lightbox) load
- *    themselves on demand.
+ *    (reveal, rotator), each with its own stylesheet, enqueued only when a
+ *    rendered block carries the module's trigger class; core's Interactivity
+ *    API modules (navigation overlay, accordion, lightbox) load themselves.
  *
  * @package Oogle
  */
@@ -41,8 +42,8 @@ function oogle_asset_version( string $relative_path ): string {
 }
 
 /**
- * Global base stylesheet (front end only). The editor canvas gets the
- * equivalent rules it needs from assets/css/editor.css.
+ * Global base stylesheet (front end). The editor canvas loads the same file
+ * through add_editor_style() in inc/setup.php.
  *
  * @return void
  */
@@ -66,18 +67,18 @@ add_action( 'wp_enqueue_scripts', 'oogle_enqueue_base' );
  */
 function oogle_block_styles_map(): array {
 	$map = array(
-		'core/navigation'       => 'core-navigation.css',
-		'core/group'            => 'core-group.css',
-		'core/columns'          => 'core-columns.css',
-		'core/button'           => 'core-button.css',
-		'core/image'            => 'core-image.css',
-		'core/list'             => 'core-list.css',
-		'core/paragraph'        => 'core-paragraph.css',
-		'core/quote'            => 'core-quote.css',
-		'core/accordion'        => 'core-accordion.css',
-		'core/post-template'    => 'core-post-template.css',
-		'core/breadcrumbs'      => 'core-breadcrumbs.css',
-		'core/categories'       => 'core-categories.css',
+		'core/navigation'    => 'core-navigation.css',
+		'core/group'         => 'core-group.css',
+		'core/columns'       => 'core-columns.css',
+		'core/button'        => 'core-button.css',
+		'core/image'         => 'core-image.css',
+		'core/list'          => 'core-list.css',
+		'core/paragraph'     => 'core-paragraph.css',
+		'core/quote'         => 'core-quote.css',
+		'core/accordion'     => 'core-accordion.css',
+		'core/post-template' => 'core-post-template.css',
+		'core/breadcrumbs'   => 'core-breadcrumbs.css',
+		'core/categories'    => 'core-categories.css',
 	);
 
 	/**
@@ -116,22 +117,32 @@ add_action( 'init', 'oogle_enqueue_block_styles' );
 /**
  * Progressive-enhancement script modules.
  *
- * Each module is registered always and enqueued only when a rendered block
- * carries its trigger class (checked at render time, before wp_footer prints
- * script modules). All are small, deferred, dependency-free ES modules.
+ * Each module is registered always and enqueued, with its stylesheet, only
+ * when a rendered block carries its trigger class. Block templates render
+ * before wp_head() runs (template-canvas.php), so an enqueue made during
+ * render_block still prints in the head. All are small, deferred,
+ * dependency-free ES modules.
  *
- * @return array<string, array{file:string, class:string}>
+ * @return array<string, array{file:string, class:string, style?:string}>
  */
 function oogle_script_modules(): array {
 	$modules = array(
-		'oogle-reveal'  => array( 'file' => 'assets/js/reveal.js',  'class' => 'oogle-reveal' ),  // Scroll entrances (~1.5 KB).
-		'oogle-rotator' => array( 'file' => 'assets/js/rotator.js', 'class' => 'oogle-rotator' ), // Crossfading photo stack (~2.9 KB).
+		'oogle-reveal'  => array(
+			'file'  => 'assets/js/reveal.js', // Scroll entrances (~1.5 KB).
+			'style' => 'assets/css/reveal.css',
+			'class' => 'oogle-reveal',
+		),
+		'oogle-rotator' => array(
+			'file'  => 'assets/js/rotator.js', // Crossfading photo stack (~2.9 KB).
+			'style' => 'assets/css/rotator.css',
+			'class' => 'oogle-rotator',
+		),
 	);
 
 	/**
 	 * Filter the theme's script modules.
 	 *
-	 * @param array<string, array{file:string, class:string}> $modules Handle => file + trigger class.
+	 * @param array<string, array{file:string, class:string, style?:string}> $modules Handle => file, optional stylesheet, trigger class.
 	 */
 	return (array) apply_filters( 'oogle/assets/script_modules', $modules );
 }
@@ -144,6 +155,9 @@ function oogle_script_modules(): array {
 function oogle_register_script_modules(): void {
 	foreach ( oogle_script_modules() as $handle => $module ) {
 		wp_register_script_module( $handle, OOGLE_URI . '/' . $module['file'], array(), oogle_asset_version( $module['file'] ) );
+		if ( ! empty( $module['style'] ) ) {
+			wp_register_style( $handle, OOGLE_URI . '/' . $module['style'], array( 'oogle-base' ), oogle_asset_version( $module['style'] ) );
+		}
 	}
 }
 add_action( 'init', 'oogle_register_script_modules' );
@@ -167,6 +181,9 @@ function oogle_maybe_enqueue_script_modules( string $content, array $block ): st
 	foreach ( oogle_script_modules() as $handle => $module ) {
 		if ( ! isset( $done[ $handle ] ) && str_contains( $class, $module['class'] ) ) {
 			wp_enqueue_script_module( $handle );
+			if ( ! empty( $module['style'] ) ) {
+				wp_enqueue_style( $handle );
+			}
 			$done[ $handle ] = true;
 		}
 	}

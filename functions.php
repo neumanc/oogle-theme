@@ -19,12 +19,13 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Theme version, read from style.css so it is declared in exactly one place.
+ * get_template() is the parent's directory name whatever it was installed as.
  */
-define( 'OOGLE_VERSION', (string) wp_get_theme( 'oogle-theme' )->get( 'Version' ) );
+define( 'OOGLE_VERSION', (string) wp_get_theme( get_template() )->get( 'Version' ) );
 define( 'OOGLE_DIR', get_template_directory() );
 define( 'OOGLE_URI', get_template_directory_uri() );
 
-foreach ( array( 'setup', 'assets', 'block-styles', 'editor', 'images', 'cleanup', 'a11y' ) as $oogle_module ) {
+foreach ( array( 'setup', 'assets', 'block-styles', 'editor', 'images', 'cleanup', 'a11y', 'updates' ) as $oogle_module ) {
 	require_once OOGLE_DIR . '/inc/' . $oogle_module . '.php';
 }
 unset( $oogle_module );

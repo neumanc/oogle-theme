@@ -4,7 +4,7 @@
  * Slug: oogle/query-cards
  * Categories: oogle-components
  * Inserter: false
- * Description: Inherited-query card grid used by the archive and search templates. Not shown in the inserter.
+ * Description: Inherited-query card grid used by the index, archive and search templates. Not shown in the inserter.
  *
  * @package Oogle
  */
@@ -33,9 +33,7 @@
 	<!-- /wp:query-pagination -->
 
 	<!-- wp:query-no-results -->
-		<!-- wp:paragraph -->
-		<p><?php esc_html_e( 'Nothing found.', 'oogle' ); ?></p>
-		<!-- /wp:paragraph -->
+		<!-- wp:pattern {"slug":"oogle/hidden-no-results"} /-->
 	<!-- /wp:query-no-results -->
 </div>
 <!-- /wp:query -->

@@ -1,7 +1,17 @@
-# Excluded from release archives (git archive)
+# Excluded from release archives (git archive --format=zip). Keep in sync with .distignore.
+.github/         export-ignore
 docs/            export-ignore
 tools/           export-ignore
 .editorconfig    export-ignore
 .gitattributes   export-ignore
 .gitignore       export-ignore
+.distignore      export-ignore
 phpcs.xml.dist   export-ignore
+AGENTS.md        export-ignore
+CONTRIBUTING.md  export-ignore
+SECURITY.md      export-ignore
+UPGRADE.md       export-ignore
+
+# Normalise line endings.
+* text=auto eol=lf
+*.png binary

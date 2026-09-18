@@ -3,16 +3,23 @@
 Patterns are the primary authoring unit. They are PHP files in `patterns/` with the standard
 header; core registers them automatically. Categories: `oogle-sections`, `oogle-components`.
 
-## The initial set (0.1.0)
+## The set (1.0.0)
 
 | Slug | Composition | Notes |
 |---|---|---|
-| `oogle/hero-cover` | Cover (scrim gradient, `oogle-lcp`) → Group → eyebrow, **H1**, lead, Buttons | Only pattern with an H1; use with the `page-no-title` template. Needs ≥1600px photography; otherwise build a **split hero** (Columns: text 55% / Image 45% with `oogle-lcp`) as the Precision homepage does |
+| `oogle/hero-cover` | Cover (scrim gradient, `oogle-lcp`) → Group → eyebrow, **H1**, lead, Buttons | Carries the H1; use with the `page-no-title` template. Needs ≥1600px photography; otherwise use `hero-split` |
+| `oogle/hero-split` | Group → Columns 55/45 → eyebrow, **H1**, lead, Buttons / Image 4:5 with `oogle-lcp` | Carries the H1; the default choice when photos are under ~1600px wide |
 | `oogle/section-split` | Group → Columns 7/5 → eyebrow, H2, paragraph, checklist, outline button / Image 4:5 | Apply Columns style "Reverse when stacked" to keep the image first on phones |
-| `oogle/cards-grid` | Group (tint) → intro → Group **grid** (min column 17rem) → Group `card-flush` × 3 | Duplicate a card to add one; reflows with no breakpoints |
+| `oogle/cards-grid` | Group (tint) → intro → Group **grid** (min column 20rem) → Group `card-flush` × 3 | Duplicate a card to add one; reflows with no breakpoints |
 | `oogle/cta-panel` | Group (reversed) → H2, lead, Buttons (primary + text `tel:`) | Every page should end with one |
-| `oogle/testimonials` | Group → intro → grid → Group `card` → Quote `testimonial` | Convert a quote to a synced pattern to reuse it |
-| `oogle/query-cards` | Query Loop → Post Template grid → `card-flush` | `Inserter: false`; used by archive/search templates |
+| `oogle/testimonials` | Group → intro → grid (min column 20rem) → Group `card` → Quote `testimonial` | Convert a quote to a synced pattern to reuse it |
+| `oogle/faq` | Group → intro → core Accordion (H3 + button per item, `role="region"` panels) | Five to eight real questions; the accordion is keyboard/screen-reader ready as is |
+| `oogle/query-cards` | Query Loop → Post Template grid → `card-flush` | `Inserter: false`; used by index/archive/search templates |
+| `oogle/hidden-404`, `hidden-blog-heading`, `hidden-no-results` | Template copy | `Inserter: false`; exist so template text is translatable |
+
+Not included on purpose (add in a child until a second site needs it): stats row, logo
+grid, team, pricing, contact section. Each is a Group + grid of core blocks; nothing in the
+parent is required to build one.
 
 ## Rules
 
@@ -24,6 +31,9 @@ header; core registers them automatically. Categories: `oogle-sections`, `oogle-
 4. **Heading discipline.** Hero carries the H1. Every other pattern starts at H2 and nests.
 5. **Placeholders are obviously placeholders.** Copy reads "Section heading"; images use
    `assets/img/placeholder.svg` with alt "Describe this image" so QA catches misses.
+   Block-comment attributes that carry translated text are JSON-escaped
+   (`wp_json_encode( $s, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT )`),
+   never HTML-escaped (see `patterns/faq.php`).
 6. **Markup must be canonical.** Hand-written block HTML must match what the block itself
    serializes, or the editor flags "unexpected or invalid content". To get canonical markup:
    build the block in the editor and copy it (Code editor view), or in the console

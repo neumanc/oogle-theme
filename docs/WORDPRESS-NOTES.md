@@ -1,6 +1,6 @@
-# WordPress 7.1 — verified behaviour that shaped decisions
+# WordPress 7.x — verified behaviour that shaped decisions
 
-Verified on WordPress 7.1 / PHP 8.3 (Playground CLI and Docker) on 16 September 2026.
+Verified on WordPress 7.1 / PHP 8.3 (Playground CLI and Docker) on 16 September 2026; re-verified on 7.0.4 and 7.1 (Docker, PHP 8.1/8.3/8.4) on 17 September 2026 for the 1.0.0 release gate.
 
 ## Native blocks that removed planned custom work
 
@@ -38,6 +38,11 @@ Not present: `core/grid` as a block (Grid is a Group layout), `core/form`, `core
 13. **Navigation fallback auto-creates a menu.** If a Navigation block without `ref` renders before any `wp_navigation` post exists, core creates a "Navigation" post containing a Page List block — and that post then wins over menus created later (it is also an axe `list` violation: `<ul>` nested directly in `<ul>`). On a fresh site, create the real menu **before** the first front-end render, or delete the auto-created one. Observed on dev after deployment.
 14. **Custom overlay template part** (`"overlay":"<slug>"` on the Navigation block) renders the theme's part inside the overlay with `disable-default-overlay`; nested Navigation blocks are forced to `overlayMenu: never` and rendered in a `div`. The theme owns all overlay styling in that mode. Images inside get `fetchpriority="low"` automatically.
 15. **Grid column/row spans** (`style.layout.columnSpan/rowSpan`) work with `minimumColumnWidth` grids and collapse responsively through core-generated container queries; a 2×2 + 1 + 1 / 3 composition fills a 3-column grid exactly.
+16. **Root `settings.lightbox.enabled` does nothing for the Image block.** Core's own theme.json declares `settings.blocks.core/image.lightbox.allowEditing`, so the block-level lookup always succeeds and never falls back to the root value (`block_core_image_get_lightbox_settings()`). Enable the lightbox under `settings.blocks.core/image.lightbox` — the parent leaves it `enabled: false`, editable per image.
+17. **Constrained layout centres children with `margin-inline: auto !important`.** Any child narrower than `contentSize` becomes a centred box; do not set a `max-inline-size` on paragraphs (1.0.0 removed the parent's 68ch rule for this reason).
+18. **`core/comments` renders nothing** when comments are closed and there are none, so the part can sit in `single.html` unconditionally.
+19. **Editor styles**: `add_editor_style()` rewrites `html`/`body` selectors to `.editor-styles-wrapper`; a document-level `display: flex` in `base.css` must be undone in `editor.css`.
+20. **7.0 vs 7.1**: every block and template-part area the theme uses exists in 7.0.4 (`core/breadcrumbs`, `core/accordion*`, `core/navigation-overlay-close`, `navigation-overlay` area, `core/terms-query`, `core/icon`). Only `core/tabs` (listed in the editor allow-list) is 7.1+; an unregistered name in `allowed_block_types_all` is ignored.
 
 ## Gravity Forms 3.1 (for reference)
 

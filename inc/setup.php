@@ -19,10 +19,16 @@ defined( 'ABSPATH' ) || exit;
  * @return void
  */
 function oogle_setup(): void {
-	// Editor styles: block themes load theme.json automatically; this adds the
-	// small editor-only corrections file. Front-end block CSS is attached per
-	// block in assets.php and is loaded in the editor by core as well.
-	add_editor_style( 'assets/css/editor.css' );
+	// Translations. The parent ships none, but a site may drop oogle-{locale}.mo
+	// into languages/ (or wp-content/languages/themes/) and they will load.
+	load_theme_textdomain( 'oogle', OOGLE_DIR . '/languages' );
+
+	// Editor styles: block themes load theme.json automatically. base.css is
+	// added so the canvas matches the front end (button targets, section
+	// adjacency, text wrapping…); editor.css follows it and undoes the few
+	// document-level rules that make no sense inside the canvas. Per-block CSS
+	// is attached in assets.php and loaded in the editor by core as well.
+	add_editor_style( array( 'assets/css/base.css', 'assets/css/editor.css' ) );
 
 	// Core's own patterns and the pattern directory are noise for client sites.
 	// A child theme may re-enable them with add_theme_support( 'core-block-patterns' ).

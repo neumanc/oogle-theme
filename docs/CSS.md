@@ -8,10 +8,14 @@
 2. **Per-block files** `assets/css/blocks/core-<block>.css`, attached with
    `wp_enqueue_block_style()`. Core loads them only when the block renders and inlines them
    when small. Map lives in `inc/assets.php` (filter `oogle/assets/block_styles`).
-3. **`assets/css/base.css`** — the only global sheet: focus ring, motion (reduced-motion
-   guard, reveal, image motion), element defaults, header z-index, full-width section
-   adjacency. Keep under 8 KB.
-4. **`assets/css/integrations/`** — third-party mappings loaded only when the integration
+3. **`assets/css/base.css`** — the only global sheet: document layout, focus ring, targets,
+   media defaults, header z-index, sticky aside, reduced-motion guard, CSS-only image
+   motion. Loaded on the front end **and in the editor canvas** (`add_editor_style`), so
+   nothing in it may depend on a script or on front-end-only markup; `editor.css` follows
+   it in the editor and undoes the three document-level rules. Keep under 6 KB.
+4. **`assets/css/<module>.css`** — the stylesheet of a script module (`reveal.css`,
+   `rotator.css`), enqueued only with the module on pages that use it.
+5. **`assets/css/integrations/`** — third-party mappings loaded only when the integration
    renders (Gravity Forms → its CSS custom properties).
 
 ## Specificity rules
@@ -53,10 +57,11 @@ beyond documented `wp-block-*` class names; utility classes.
 
 ## Budget
 
-Authored front-end CSS in the parent (base + per-block files): < 32 KB unminified
-(0.1.0: ~17 KB; 0.3.0: ~21.8 KB; 0.4.0: ~25.7 KB; 0.5.0: ~29 KB with four block styles for editorial pages). Only base.css is a separate request; per-block files are inlined by core when
-the block renders. Integrations are budgeted separately (Gravity Forms: ~6.5 KB, loaded only
-with a form). Measure with `tools/payload.sh`.
+Authored front-end CSS in the parent: < 32 KB unminified, < 10 KB gzip for everything a
+single page could possibly load. Measured at 1.0.0: `base.css` 5.5 KB (2.0 KB gz);
+per-block files 21.7 KB together (~7.3 KB gz), inlined by core only for blocks on the page;
+`reveal.css` 2.8 KB and `rotator.css` 1.5 KB only with their modules; Gravity Forms mapping
+6.6 KB only with a form. Measure with `tools/payload.sh`.
 
 ## Header collapse ranges (0.2.0)
 
@@ -64,12 +69,13 @@ with a form). Measure with `tools/payload.sh`.
 to the header Group to collapse below 1200px (seven links + phone + CTA need it). These are
 the only two ranges; if a menu still does not fit, shorten it.
 
-## Motion (0.3.0)
+## Motion (0.3.0, files split at 1.0.0)
 
-Reveal classes (`oogle-reveal`, `--clip`, `--left`, `--right`, `--stagger`) are opt-in on
-any block and only take effect once `reveal.js` has added `oogle-js-reveal` to `<html>`
-(see docs/JAVASCRIPT.md). `oogle-zoom-hover` and `oogle-drift` are pure CSS. Every rule
-lives in `base.css`; a site never writes its own keyframes for these. Under
+Reveal classes (`oogle-reveal`, `--clip`, `--left`, `--right`, `--scale`, `--stagger`) are
+opt-in on any block and only take effect once `reveal.js` has added `oogle-js-reveal` to
+`<html>` (see docs/JAVASCRIPT.md); their rules live in `reveal.css`, the rotator's in
+`rotator.css`, both enqueued with the module. `oogle-zoom-hover` and `oogle-drift` are pure
+CSS in `base.css`. A site never writes its own keyframes for these. Under
 `prefers-reduced-motion: reduce` all of it is cancelled by the one `!important` block.
 
 Rules of thumb: reveal sections and image grids, not every paragraph; one drift image per
@@ -85,6 +91,16 @@ its own top and bottom padding; that is what separates content, not the root blo
 
 `text-wrap: balance` on `h1`–`h4`, `text-wrap: pretty` on `p`, `li`, `figcaption`.
 Progressive; do not add manual `<br>` to fix a widow.
+
+## Prose measure (removed at 1.0.0)
+
+There is no per-paragraph `max-inline-size`. Core's constrained layout centres every child
+with `margin-inline: auto !important`, so a paragraph narrower than the content width
+becomes a centred box whose left edge depends on its font size — lead, eyebrow and body
+copy each sat on a different edge, and body copy at 68ch even exceeded `contentSize`. The
+measure is `layout.contentSize` (44rem ≈ 70 characters at the body size); narrow it per
+section with a Group's own content width. `custom.measure.prose` stays available for a
+child that wants it on a flex or flow layout.
 
 ## Editorial page styles (0.5.0)
 

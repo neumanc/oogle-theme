@@ -27,7 +27,7 @@ $oogle_quotes = array(
 	</div>
 	<!-- /wp:group -->
 
-	<!-- wp:group {"align":"wide","layout":{"type":"grid","minimumColumnWidth":"18rem"},"style":{"spacing":{"blockGap":"var:preset|spacing|50"}}} -->
+	<!-- wp:group {"align":"wide","layout":{"type":"grid","minimumColumnWidth":"20rem"},"style":{"spacing":{"blockGap":"var:preset|spacing|50"}}} -->
 	<div class="wp-block-group alignwide">
 		<?php foreach ( $oogle_quotes as $oogle_q ) : ?>
 		<!-- wp:group {"className":"is-style-card","layout":{"type":"constrained"}} -->

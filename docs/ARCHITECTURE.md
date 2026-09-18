@@ -13,15 +13,16 @@ WordPress core blocks + theme.json engine
 
 | File | Responsibility | Filters exposed |
 |---|---|---|
-| `setup.php` | editor style, remove core patterns, pattern categories, disable remote patterns | — |
-| `assets.php` | `base.css`; per-block stylesheets via `wp_enqueue_block_style()`; Gravity Forms token map on `gform_enqueue_scripts` | `oogle/assets/block_styles` (block ⇒ file map) |
+| `setup.php` | text domain, editor styles (`base.css` + `editor.css`), remove core patterns, pattern categories, disable remote patterns | — |
+| `assets.php` | `base.css`; per-block stylesheets via `wp_enqueue_block_style()`; script modules + their stylesheets enqueued on first render of a trigger class; Gravity Forms token map on `gform_enqueue_scripts` | `oogle/assets/block_styles` (block ⇒ file map), `oogle/assets/script_modules` (handle ⇒ file, style, class) |
 | `block-styles.php` | `register_block_style()` for the component vocabulary | `oogle/block_styles` |
 | `editor.php` | curated `allowed_block_types_all` (post editing only; Site Editor untouched) | `oogle/editor/allowed_blocks` |
 | `images.php` | JPEG → WebP sub-sizes (AVIF opt-in); hero Cover gets `fetchpriority="high"`, no lazy | `oogle/images/avif` |
 | `cleanup.php` | removes the emoji loader on the front end | `oogle/cleanup/emoji` |
 | `a11y.php` | render-time fixes for verified core defects (accordion panel `role="region"`) | — |
+| `updates.php` | answers core's `update_themes_github.com` check from the latest GitHub Release; renames the extracted folder if needed; caches 6 h / 1 h on failure | `oogle/updates/enabled`, `oogle/updates/request_args`, `oogle/updates/api_url`, `oogle/updates/style_url` |
 
-`functions.php` only requires these files. Total PHP ≈ 400 lines.
+`functions.php` only requires these files. Total PHP ≈ 750 lines, a third of it comments.
 
 ## Templates
 
@@ -36,19 +37,25 @@ query → footer part. Design lives in patterns inside content. `post-content` i
 | `page-narrow` | Prose pages at 40rem |
 | `blank` | Landing pages, no header/footer |
 | `single` | Posts: breadcrumbs, title, meta part, featured image, content, prev/next |
-| `index`, `archive`, `search` | Card grids via the `oogle/query-cards` pattern |
-| `404` | Search + home link |
+| `single` | … plus the `comments` part (renders nothing when comments are closed and none exist) |
+| `index` | Blog index: H1 from `oogle/hidden-blog-heading`, cards via `oogle/query-cards` |
+| `archive`, `search` | Query title as H1, cards via `oogle/query-cards` |
+| `404` | `oogle/hidden-404`: heading, lead, search, home link |
+
+Copy that appears in a template is placed in a hidden pattern (`patterns/hidden-*.php`,
+`Inserter: false`) so it is translatable; HTML templates cannot be.
 
 ## Template parts
 
-`header` and `footer` are **expected to be overridden by the child** (they are content).
-`breadcrumbs` uses core's Breadcrumbs block (WP 7.1) — no plugin coupling. `post-meta` is
-date + category.
+`header`, `footer` and `navigation-overlay` are **expected to be overridden by the
+child** (they are content). `breadcrumbs` uses core's Breadcrumbs block — no plugin
+coupling. `post-meta` is date + category. `comments` is core's Comments block (list,
+pagination, form).
 
 ## Patterns
 
-See [PATTERNS.md](PATTERNS.md). Six in the parent, all core-block compositions, all using
-preset slugs and block styles only.
+See [PATTERNS.md](PATTERNS.md). Seven in the inserter plus four hidden template patterns,
+all core-block compositions, all using preset slugs and block styles only.
 
 ## Section styles
 

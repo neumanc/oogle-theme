@@ -9,8 +9,9 @@ site starts from the same small, standards-based base and stays maintainable for
    ES modules. If WordPress or the browser provides something, we use it rather than wrap it.
 2. **The editor approximates the front end.** A block theme is the only theme type where the
    same tokens and the same CSS drive both. Clients should not have to imagine the result.
-3. **Small payloads by default.** The parent adds ~3 KB of global CSS and zero JavaScript. It
-   should be hard to accidentally build a slow site.
+3. **Small payloads by default.** The parent adds ~2 KB (gzip) of global CSS, per-block CSS
+   only for blocks on the page, and no JavaScript unless a block opts into one of two tiny
+   modules. It should be hard to accidentally build a slow site.
 4. **Accessibility as architecture.** Landmarks, headings, focus, targets and motion are
    decided once in the theme, not patched per page.
 5. **Reuse through a contract, not through copying.** A child theme changes token *values*;

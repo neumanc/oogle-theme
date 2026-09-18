@@ -107,6 +107,7 @@
 }
 
 /* ---- Numbered: each direct child gets "01", "02" … in the heading font ------
+   decimal-leading-zero keeps "09" → "10" correct past nine items.
    Hairlines use the current text colour, so the style reads on light and dark
    surfaces alike. The numeral colour is the primary token; a child theme may
    recolour it per surface. */
@@ -136,7 +137,7 @@
 
 .is-style-numbered > *::before {
 	counter-increment: oogle-numbered;
-	content: "0" counter(oogle-numbered);
+	content: counter(oogle-numbered, decimal-leading-zero);
 	position: absolute;
 	inset-inline-start: 0;
 	inset-block-start: calc(var(--wp--preset--spacing--50) + 0.15em);

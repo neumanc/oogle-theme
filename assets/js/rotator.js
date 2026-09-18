@@ -31,6 +31,7 @@ function start( el ) {
 	let current = 0;
 	let timer = 0;
 	let onScreen = true;
+	let busy = false; // A crossfade is being prepared; ignore re-entrant schedules.
 	slides[ 0 ].classList.add( 'is-shown' );
 	el.classList.add( 'is-active' );
 
@@ -47,8 +48,13 @@ function start( el ) {
 	};
 
 	const show = async () => {
+		if ( busy ) {
+			return;
+		}
+		busy = true;
 		const next = ( current + 1 ) % slides.length;
 		await prepare( next );
+		busy = false;
 		if ( reduced.matches || ! onScreen || document.hidden ) {
 			schedule();
 			return;

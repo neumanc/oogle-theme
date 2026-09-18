@@ -26,7 +26,7 @@ $oogle_placeholder = esc_url( get_theme_file_uri( 'assets/img/placeholder.svg' )
 	</div>
 	<!-- /wp:group -->
 
-	<!-- wp:group {"align":"wide","layout":{"type":"grid","minimumColumnWidth":"17rem"},"style":{"spacing":{"blockGap":"var:preset|spacing|50"}}} -->
+	<!-- wp:group {"align":"wide","layout":{"type":"grid","minimumColumnWidth":"20rem"},"style":{"spacing":{"blockGap":"var:preset|spacing|50"}}} -->
 	<div class="wp-block-group alignwide">
 		<?php for ( $oogle_i = 1; $oogle_i <= 3; $oogle_i++ ) : ?>
 		<!-- wp:group {"className":"is-style-card-flush","style":{"spacing":{"blockGap":"0"}},"layout":{"type":"constrained"}} -->

@@ -1,0 +1,20 @@
+# Files excluded from the release zip (wp dist-archive / packaging tools).
+# Keep in sync with .gitattributes export-ignore, which git archive uses.
+.git
+.github
+.gitattributes
+.gitignore
+.distignore
+.editorconfig
+.DS_Store
+docs
+tools
+phpcs.xml.dist
+AGENTS.md
+CONTRIBUTING.md
+SECURITY.md
+UPGRADE.md
+node_modules
+vendor
+*.zip
+*.log
