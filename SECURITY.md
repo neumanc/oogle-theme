@@ -25,6 +25,15 @@ theme; an optional `OOGLE_GITHUB_TOKEN` constant in `wp-config.php` only raises 
 rate limit and is sent to `api.github.com` alone — never to another host, a filtered URL
 or a redirect target.
 
+Before the installed parent is replaced, the theme requires the release to publish a
+`.sha256` sidecar, verifies the downloaded package against it on `upgrader_pre_download`,
+and validates the extracted package on `upgrader_source_selection` (identity, canonical
+`Update URI`, exact expected version, declared and compatible requirements, valid
+`theme.json`, block-theme index) — on every upgrader path, including the ones where core's
+own `check_package()` does not run. The sidecar lives in the same GitHub Release as the
+package, so it proves the transfer's integrity, not the publisher's identity; a compromised
+repository or account is not detected by it. Only releases of the installed major are offered.
+
 Security controls that belong to other layers are intentionally absent: authentication
 hardening, login throttling, REST restrictions, HTTP security headers, WAF rules, file
 permissions and version hiding are the job of the server, CDN or a dedicated plugin.

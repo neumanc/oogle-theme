@@ -27,6 +27,23 @@ enabled, and the temp-backup/rollback core performs when a copy fails.
 
 Requirements (`Requires at least`, `Requires PHP`) are read from the new version's own
 `style.css` at the release tag, so a host that cannot run the new version is not offered it.
+If that file cannot be read, or does not declare both requirements and the tag's version,
+the release is not offered at all (nothing is ever inherited from the installed copy).
+
+Only releases of the installed **major** are offered automatically: a 1.x site receives
+1.x patch and minor releases and is never moved to 2.x by the routine check. To adopt a new
+major once the child theme has been migrated, either upload the new major's `oogle-theme.zip`
+once (Appearance → Themes → Add New → Upload, "Replace current with uploaded") — the site
+then follows that major — or opt in from the site mu-plugin:
+`add_filter( 'oogle/updates/allowed_major', fn() => 2 );` (return `null` to follow any major).
+
+Two gates run before the installed parent is replaced, on every path (Appearance → Themes,
+Dashboard → Updates, automatic updates, WP-CLI, Oogle Core): the downloaded zip must match
+the SHA-256 published with the release, and the extracted package must be this theme (name,
+no `Template` header, canonical `Update URI`) at exactly the version being installed, with
+declared requirements this host meets, a valid `theme.json` and `templates/index.html`. A
+package that fails either gate leaves the installed theme untouched; the message names the
+reason.
 
 ## Procedure for a client site
 

@@ -5,9 +5,72 @@ Versioning: see docs/RELEASES.md.
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-09-18
+
+Production hardening from an independent audit of 1.0.0. No breaking change: every slug,
+block style, pattern, part, template, class and filter from 1.0.0 is kept. Tested on
+WordPress 7.1 with PHP 8.4 and 8.5.
+
+### Fixed
+- **Updater requirements fail closed.** A release whose tagged `style.css` cannot be
+  fetched, is empty, lacks `Requires at least` or `Requires PHP`, or declares a `Version`
+  other than its tag is no longer offered; 1.0.0 substituted the installed copy's
+  requirements and offered the release anyway.
+- **Package validation on every upgrader path.** Core's `Theme_Upgrader::check_package()`
+  does not run for `Theme_Upgrader::upgrade()` (the no-JavaScript update screen, WordPress
+  automatic updates, and plugins driving the upgrader — Oogle Core included). The theme now
+  validates the extracted package itself on `upgrader_source_selection` before the parent
+  is replaced: theme identity, no `Template` header, canonical `Update URI`, `Version`
+  equal to the version being installed, declared and compatible requirements, a valid
+  `theme.json`, `templates/index.html`. The download is also verified against the
+  release's published SHA-256 on `upgrader_pre_download` (integrity of the transfer, not
+  publisher authentication). A release without a `.sha256` sidecar is not offered.
+  When the parent is the directly active theme and a package is rejected, maintenance
+  mode is switched off again (core only does so after a successful install, so a refused
+  package would otherwise leave the site answering 503 for up to ten minutes).
+- Outline button inside a Cover/reversed section: the hover state inverted to a base fill
+  while a `has-base-color` preset class (which core pins with `!important`) kept the text
+  base — white on white. The hover/focus state is now the one primary-deep rule for every
+  context; the Hero (cover) pattern no longer sets a text-colour preset on that button.
+  Existing content keeps the fix without edits.
+- `reveal.js`: only elements the module has actually registered are hidden
+  (`oogle-reveal-ready`), so markup inserted after load can never stay invisible. New
+  `oogle:reveal` event registers dynamic markup; registering twice is a no-op.
+- `inc/editor.php`: the inserter allow-list never broadens an upstream `false`, intersects
+  with an earlier plugin's array instead of replacing it, restricts only the post editor
+  (`core/edit-post`) for public/REST-visible, non-internal post types, and leaves the Site
+  Editor and template/part/pattern/navigation editing untouched.
+- Mosaic captions are visible by default; they fold away only on hover-capable devices for
+  tiles that have a focusable control (link, lightbox button) and return on hover or
+  keyboard focus. Caption links are clickable. Captions no longer depend on pointer hover.
+- `theme.json`: removed `settings.blocks.core/pullquote.typography.fontSize`, which the
+  official WordPress 7.0/7.1 schemas reject (WordPress ignored it; no visual change).
+
+### Added
+- Rotator pause/play control (WCAG 2.2.2 Pause, Stop, Hide): an accessible toggle inside
+  the stack, added only when the module actually rotates; labels translatable through
+  `script_module_data_oogle-rotator`. `is-paused` stops crossfades and the settle.
+- Major-version boundary: only releases of the installed major are offered (a 1.x site
+  follows 1.x; 2.0.0 requires the new `oogle/updates/allowed_major` filter or a one-time
+  manual upload). Discovery reads the newest 30 releases in one request instead of
+  `/releases/latest`, so a later 1.x maintenance release is still found after 2.x exists.
+- Release gate: CI and Release run the same reusable `checks.yml` on the exact commit —
+  PHP 8.4 and 8.5 syntax, WPCS, PHPCompatibility 8.4+, JSON, official theme.json schema
+  validation for WordPress 7.0 and 7.1, JavaScript syntax, client-leak and secret scans,
+  the updater suites (no token, bogus token) and the redirect transport test on WordPress
+  7.1 / PHP 8.4, and an archive dry run. Release additionally requires the tag to be an
+  ancestor of `main` and to match `style.css`, `readme.txt` and the CHANGELOG.
+- Dev scripts `tools/validate-theme-json.sh`, `tools/secret-scan.sh`,
+  `tools/check-version.sh`, `tools/check-archive.sh`; `.wp-env.json` for the gate.
+- `tests/updater-security.php` grew from 115 to 187 scenarios (requirements matrix,
+  major policy, checksum, download guard, package validation, source-selection gate).
+- `tests/editor-allowlist.php` (25 scenarios) and `tests/browser/` (Playwright: hero
+  button states, mosaic captions, reveal incl. dynamic insertion, rotator control,
+  keyboard walk, axe, overflow, console) — dev-only, excluded from the archive.
+
 ### Changed
 - README: describe the theme's place next to Oogle Core (which may install and
-  update it) and state that the theme never depends on Core. No code change.
+  update it) and state that the theme never depends on Core.
 
 ## [1.0.0] — 2026-09-18
 

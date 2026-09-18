@@ -57,9 +57,13 @@ Details, including the local lab: [docs/INSTALLATION.md](docs/INSTALLATION.md).
 ## Updates
 
 `style.css` declares `Update URI: https://github.com/neumanc/oogle-theme`. `inc/updates.php`
-answers WordPress's own update check by reading the repository's latest GitHub Release, so
+answers WordPress's own update check by reading the repository's GitHub Releases, so
 new versions appear in Appearance → Themes, Dashboard → Updates, auto-updates and
-`wp theme update` like any other theme. Nothing a site owns lives inside the parent
+`wp theme update` like any other theme. Only releases of the installed major are offered
+(1.x follows 1.x; see UPGRADE.md for moving to a new major). Before the parent is replaced
+the theme verifies the download against the release's published SHA-256 and checks that the
+extracted package is this theme at the expected version with compatible requirements — on
+every upgrader path, including automatic updates. Nothing a site owns lives inside the parent
 directory, so an update cannot overwrite client work. Procedure, guarantees and the
 tested upgrade: [UPGRADE.md](UPGRADE.md). Release mechanics: [docs/RELEASES.md](docs/RELEASES.md).
 

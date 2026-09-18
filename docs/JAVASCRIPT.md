@@ -31,14 +31,21 @@ earns its place.
 1. Add `oogle-reveal` (or `oogle-reveal--clip`, `--left`, `--right`, `--stagger`) to a
    block's Additional CSS class(es).
 2. `inc/assets.php` sees the class during `render_block` and enqueues the module once.
-3. The module adds `oogle-js-reveal` to `<html>`, then observes each element. Elements
-   already in view on load are shown immediately (no flash on the first screen); the rest
-   get `is-visible` when 12% of them crosses the viewport, minus a 10% bottom margin. An
-   element at least half a viewport tall reveals as soon as it enters (a tall section can
-   never reach 12% of itself; 1.0.0 fix).
-4. The hiding rules in `reveal.css` are scoped to `.oogle-js-reveal`, so with JS off,
-   blocked or failed, or in the editor, everything is simply visible.
-5. Under `prefers-reduced-motion: reduce` the module exits before touching the DOM and the
+3. The module registers each matching element: it adds `oogle-reveal-ready` and either
+   shows it at once (already in view on load — no flash on the first screen) or observes
+   it, adding `is-visible` when 12% of it crosses the viewport, minus a 10% bottom margin.
+   An element at least half a viewport tall reveals as soon as it enters (a tall section
+   can never reach 12% of itself; 1.0.0 fix). It also adds `oogle-js-reveal` to `<html>`
+   (informational only since 1.0.1).
+4. The hiding rules in `reveal.css` are scoped to `.oogle-reveal-ready`, which only the
+   module adds to elements it has registered, so with JS off, blocked or failed, in the
+   editor, or for markup inserted after load that nobody registered, everything is simply
+   visible — unregistered content is never hidden (1.0.1 fix).
+5. Dynamic markup: after inserting nodes, dispatch a bubbling `oogle:reveal` event on the
+   inserted container (`node.dispatchEvent( new Event( 'oogle:reveal', { bubbles: true } ) )`)
+   and the module registers any matching elements inside it. Registering an element twice
+   is a no-op. There is no document-wide MutationObserver by design.
+6. Under `prefers-reduced-motion: reduce` the module exits before touching the DOM and the
    CSS cancels every transition anyway.
 
 `--stagger` animates the element's direct children with 80 ms steps (up to eight). Keep it
@@ -63,13 +70,22 @@ element's `img` (the clip lives on the image, not the observed element, because 
 4. Each shown slide's image eases from `scale(1.08)` to `scale(1)` over the hold: a settle,
    not a pan.
 5. `prefers-reduced-motion: reduce`: the module returns before touching the DOM; the first
-   image stays, unscaled.
+   image stays, unscaled, and no control is added.
+6. Pause/play (1.0.1): when it does rotate, the module appends one
+   `<button class="oogle-rotator__toggle" aria-pressed>` to the stack. Pausing clears the
+   schedule and adds `is-paused` (the settle stops too); playing resumes. Labels come from
+   `script_module_data_oogle-rotator` (`pause`, `play`; translated in `inc/assets.php`).
+   The control sits at the stack's top-end corner (z-index 4, the corner least likely
+   to be covered by an overlaid content layer); a child theme may reposition it with CSS
+   but must keep it reachable by pointer and keyboard — a control under a transparent
+   full-width content layer is not.
 
-Accessibility note (WCAG 2.2.2 Pause, Stop, Hide): the rotator has no on-page pause
-control by design — it only ever rotates decorative photography behind stable copy and is
-inert under the OS reduced-motion preference. If a site rotates anything a visitor needs to
-read, do not use this module; build the content as static blocks or a core block with
-controls.
+Accessibility note (WCAG 2.2.2 Pause, Stop, Hide): the rotation starts automatically,
+lasts longer than five seconds and runs beside the page's content, so the criterion
+applies even though the photographs are decorative; the toggle above is the required
+mechanism, and the OS reduced-motion preference disables the rotation entirely. If a site
+rotates anything a visitor needs to read, do not use this module; build the content as
+static blocks or a core block with controls.
 
 What the module will never do: scroll-jack, pin, parallax the page, measure layout in a
 scroll handler, or run on every page.

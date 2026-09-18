@@ -59,9 +59,14 @@ Fixed at 1.0.0: the blog index had no H1 (`page-has-heading-one`); breadcrumbs u
 
 ## Known limitations
 
-- **Rotator (2.2.2 Pause, Stop, Hide):** the opt-in hero rotator has no on-page pause
-  control; it honours `prefers-reduced-motion` and only rotates decorative photographs
-  behind static copy. Do not use it for content that must be read.
+- **Rotator (2.2.2 Pause, Stop, Hide):** since 1.0.1 the opt-in hero rotator adds a
+  pause/play toggle whenever it rotates (it starts automatically, lasts longer than five
+  seconds and runs beside the content, so the criterion applies even to decorative
+  photographs); it honours `prefers-reduced-motion`. Do not use it for content that must
+  be read.
+- **Mosaic captions (keyboard):** captions are visible by default and only fold away, on
+  hover-capable devices, for tiles with a focusable control (link or lightbox button),
+  returning on hover or keyboard focus — never hover-only (1.0.1 fix).
 - **Lightbox:** core's lightbox (`Expand on click`) is opt-in per image; core handles its
   dialog semantics and focus return.
 - **Contrast over photographs** cannot be guaranteed by the theme; the `scrim` /

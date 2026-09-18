@@ -32,26 +32,42 @@ section at release.
    AGENTS.md (lint, phpcs, JSON, modules, patterns, clean-install walk, axe, upgrade test
    for a major).
 2. Commit, tag `vX.Y.Z`, push the tag.
-3. `.github/workflows/release.yml` checks that the tag matches `style.css` and that the
-   CHANGELOG has the section, builds `oogle-theme.zip` with
+3. `.github/workflows/release.yml` first runs the complete gate (`checks.yml`, the same
+   workflow CI runs on every push and pull request) on the tagged commit: PHP 8.4 and 8.5
+   syntax, WPCS, PHPCompatibility 8.4+, JSON, official theme.json schema validation for
+   every supported WordPress version, JavaScript syntax, client-leak and secret scans, the
+   updater and package-validation suites plus the redirect transport test on a real
+   WordPress 7.1 / PHP 8.4, and an archive dry run. Only when every job has passed does the
+   release job verify that the tag is an ancestor of `main` and matches `style.css`,
+   `readme.txt` and the CHANGELOG, build `oogle-theme.zip` with
    `git archive --format=zip --prefix=oogle-theme/ vX.Y.Z` (dev files excluded by
    `.gitattributes export-ignore`; `.distignore` mirrors the list for other packagers),
-   writes `oogle-theme.zip.sha256`, and publishes a GitHub Release with both files and the
-   CHANGELOG section as notes.
+   check the archive (`tools/check-archive.sh`), write `oogle-theme.zip.sha256`, and
+   publish a GitHub Release with both files and the CHANGELOG section as notes. A gate
+   failure means no Release.
 4. Reproduce locally at any time with the same `git archive` command; the zip is a pure
    function of the tag.
 
 ## Distribution to client sites
 
 `inc/updates.php` (since 1.0.0) answers WordPress's `update_themes_github.com` filter from
-the repository's latest Release. The release **must** carry an asset named
-`oogle-theme.zip` (or `oogle-theme-X.Y.Z.zip`) whose single top-level folder is
-`oogle-theme/`; GitHub's automatic "Source code" zips are ignored on purpose (wrong folder
-name, dev files included). Drafts and pre-releases are ignored. Version comparison uses
-`version_compare()` on the tag without its `v`. The new version's `Requires at least` /
-`Requires PHP` are read from `style.css` at the tag. Results are cached in a site transient
-for six hours (one hour after a failure); Dashboard → Updates → *Check again* clears it.
-Procedure and the tested upgrade: [../UPGRADE.md](../UPGRADE.md).
+the repository's Releases. Since 1.0.1 it reads the newest 30 releases in one request and
+picks the newest published, final (`vX.Y.Z`, no `-rc`) release of the **installed major**;
+drafts, pre-releases and other majors are skipped (`oogle/updates/allowed_major` opts into
+another major). The release **must** carry an asset named `oogle-theme.zip` (or
+`oogle-theme-X.Y.Z.zip`) whose single top-level folder is `oogle-theme/`, **and** its
+`oogle-theme.zip.sha256` sidecar; GitHub's automatic "Source code" zips are ignored on
+purpose (wrong folder name, dev files included). The new version's `Requires at least` /
+`Requires PHP` and `Version` are read from `style.css` at the tag and must all be present
+and consistent, otherwise the release is not offered. Results are cached in a site
+transient for six hours (one hour after a failure); Dashboard → Updates → *Check again*
+clears it. Procedure and the tested upgrade: [../UPGRADE.md](../UPGRADE.md).
+
+Production and client installations come from **GitHub Releases → the version → the
+`oogle-theme.zip` asset** (or through the updater, which uses exactly that asset). Never
+install from GitHub's *Code → Download ZIP*, a workspace zip, or any other source archive:
+those carry dev files, repository internals and Finder metadata, and the updater will not
+accept them.
 
 Unauthenticated GitHub API calls are limited to 60 per hour per IP; the cache keeps a site
 far below that. `define( 'OOGLE_GITHUB_TOKEN', '…' )` in `wp-config.php` raises the limit
