@@ -1,0 +1,129 @@
+name: Checks
+
+# The complete release gate, as a reusable workflow so that CI (push / pull
+# request) and Release (tag) run exactly the same checks on exactly the
+# commit they were called for. Release never publishes unless every job here
+# has passed for the tagged commit.
+
+on:
+  workflow_call:
+
+# Read-only token: nothing here writes to the repository.
+permissions:
+  contents: read
+
+jobs:
+  php:
+    name: PHP ${{ matrix.php }} — syntax, WPCS, PHPCompatibility 8.4+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.4', '8.5']
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer
+          coverage: none
+
+      - name: PHP syntax
+        run: |
+          set -e
+          find . -name '*.php' -not -path './vendor/*' -not -path './node_modules/*' -print0 | xargs -0 -n1 php -l
+
+      - name: Install coding-standards tooling (dev only)
+        run: |
+          composer global config --no-plugins allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
+          composer global require --no-interaction --quiet \
+            wp-coding-standards/wpcs:^3.1 \
+            phpcompatibility/phpcompatibility-wp:^2.1 \
+            dealerdirect/phpcodesniffer-composer-installer:^1.0
+
+      - name: PHPCS (WordPress Coding Standards)
+        run: ~/.composer/vendor/bin/phpcs --standard=phpcs.xml.dist
+
+      - name: PHPCompatibility 8.4+
+        run: ~/.composer/vendor/bin/phpcs --standard=PHPCompatibilityWP --runtime-set testVersion 8.4- --extensions=php -p .
+
+  static:
+    name: JSON schema, JavaScript, leaks, secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+
+      - name: JSON parses
+        run: |
+          for f in theme.json styles/*.json; do jq -e . "$f" >/dev/null && echo "ok $f"; done
+
+      - name: theme.json and style variations validate against the official WordPress 7.0 and 7.1 schemas
+        run: bash tools/validate-theme-json.sh 7.0 7.1
+
+      - name: JavaScript modules parse
+        run: |
+          for f in assets/js/*.js; do cp "$f" /tmp/check.mjs && node --check /tmp/check.mjs && echo "ok $f"; done
+
+      - name: No client-specific strings in the parent
+        run: |
+          ! grep -rniE 'precision|precisionkb|kissimmee|gohighlevel' --exclude-dir=.git --exclude-dir=.github . || (echo 'Client-specific reference found in the parent theme' && exit 1)
+
+      - name: No secrets or credentials
+        run: bash tools/secret-scan.sh
+
+  updater:
+    name: Updater regression suites on WordPress 7.1 / PHP 8.4
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+
+      - name: Start WordPress (wp-env)
+        run: npx -y @wordpress/env@11 start
+
+      - name: Activate the theme
+        run: npx -y @wordpress/env@11 run cli wp theme activate oogle-theme
+
+      - name: Updater security + package validation suite (no token)
+        run: npx -y @wordpress/env@11 run cli wp eval-file wp-content/themes/oogle-theme/tests/updater-security.php
+
+      - name: Updater security + package validation suite (bogus token)
+        run: npx -y @wordpress/env@11 run cli wp eval-file wp-content/themes/oogle-theme/tests/updater-security.php with-token
+
+      - name: Redirect / token-isolation transport test
+        run: npx -y @wordpress/env@11 run cli wp eval-file wp-content/themes/oogle-theme/tests/redirect-transport.php
+
+      - name: Editor allow-list composition suite
+        run: npx -y @wordpress/env@11 run cli wp eval-file wp-content/themes/oogle-theme/tests/editor-allowlist.php
+
+      - name: No PHP warnings or notices were logged
+        run: |
+          npx -y @wordpress/env@11 run cli sh -c 'if [ -s wp-content/debug.log ]; then cat wp-content/debug.log; exit 1; fi; echo "debug.log empty"'
+
+  package:
+    name: Production archive dry run, version and changelog consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Version declared once, CHANGELOG has its section
+        run: bash tools/check-version.sh
+
+      - name: git archive
+        run: |
+          git archive --format=zip --prefix=oogle-theme/ HEAD -o oogle-theme.zip
+          bash tools/check-archive.sh oogle-theme.zip
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: oogle-theme-dry-run
+          path: oogle-theme.zip
+          retention-days: 7

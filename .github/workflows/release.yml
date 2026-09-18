@@ -1,45 +1,46 @@
 name: Release
 
-# Tag vX.Y.Z on main → build the production zip reproducibly with git archive
-# (dev files excluded by .gitattributes export-ignore), attach it and its
-# SHA-256 to a GitHub Release. inc/updates.php on client sites picks up the
-# release's oogle-theme.zip asset.
+# Tag vX.Y.Z → the complete gate (checks.yml) runs on the tagged commit; only
+# when every job has passed, and the commit is on main, is the production zip
+# built reproducibly with git archive (dev files excluded by .gitattributes
+# export-ignore), attached with its SHA-256 sidecar, and the GitHub Release
+# published. inc/updates.php on client sites requires both assets.
 
 on:
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+']
 
-# contents: write is the one permission needed to create the Release and upload its assets.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
+  gate:
+    uses: ./.github/workflows/checks.yml
+
   release:
+    needs: gate
     runs-on: ubuntu-latest
+    # contents: write is the one permission needed to create the Release and upload its assets.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Verify the tag matches style.css
-        run: |
-          TAG="${GITHUB_REF_NAME#v}"
-          VER="$(grep -E '^Version:' style.css | awk '{print $2}')"
-          echo "tag=$TAG style.css=$VER"
-          [ "$TAG" = "$VER" ] || (echo 'style.css Version does not match the tag' && exit 1)
-          grep -qE "^## \[$TAG\]" CHANGELOG.md || (echo "CHANGELOG.md has no [$TAG] section" && exit 1)
-
-      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
         with:
-          php-version: '8.4'
-          coverage: none
+          fetch-depth: 0
 
-      - name: PHP syntax (PHP 8.4, the supported floor)
-        run: find . -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Tag commit must be on main
+        run: |
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || (echo "Tag $GITHUB_REF_NAME ($GITHUB_SHA) is not an ancestor of main" && exit 1)
+
+      - name: Tag must match style.css, CHANGELOG and readme.txt
+        run: bash tools/check-version.sh "${GITHUB_REF_NAME#v}"
 
       - name: Build archive
         run: |
           git archive --format=zip --prefix=oogle-theme/ "$GITHUB_REF_NAME" -o oogle-theme.zip
           sha256sum oogle-theme.zip > oogle-theme.zip.sha256
-          unzip -l oogle-theme.zip
+          bash tools/check-archive.sh oogle-theme.zip "${GITHUB_REF_NAME#v}"
           cat oogle-theme.zip.sha256
 
       - name: Extract release notes

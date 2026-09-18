@@ -5,6 +5,7 @@
 .gitattributes
 .gitignore
 .distignore
+.wp-env.json
 .editorconfig
 .DS_Store
 docs
