@@ -5,7 +5,7 @@
  * Categories: oogle-sections
  * Block Types: core/cover
  * Viewport Width: 1400
- * Description: Full-width photographic hero with an H1, a lead paragraph and two calls to action. Use on pages that use the "Page (no title)" template — this pattern carries the page's only H1. The Cover carries the class "oogle-lcp" so the theme marks its image as the LCP element, and uses the "scrim" gradient preset as its overlay (a preset, not CSS, because preset color classes are !important in core).
+ * Description: Full-width photographic hero with an H1, a lead paragraph and two calls to action. Use on pages that use the "Page (no title)" template — this pattern carries the page's only H1. The Cover carries the class "oogle-lcp" so the theme marks its image as the LCP element, and uses the "scrim" gradient preset as its overlay (a preset, not CSS, because preset color classes are !important in core). The outline button carries no text-color preset: the block style owns its colours in every state (a preset class would pin the text colour with !important and defeat the hover state).
  *
  * @package Oogle
  */
@@ -31,8 +31,8 @@
 			<!-- wp:button -->
 			<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="#"><?php esc_html_e( 'Primary action', 'oogle' ); ?></a></div>
 			<!-- /wp:button -->
-			<!-- wp:button {"className":"is-style-outline","textColor":"base"} -->
-			<div class="wp-block-button is-style-outline"><a class="wp-block-button__link has-base-color has-text-color wp-element-button" href="#"><?php esc_html_e( 'Secondary action', 'oogle' ); ?></a></div>
+			<!-- wp:button {"className":"is-style-outline"} -->
+			<div class="wp-block-button is-style-outline"><a class="wp-block-button__link wp-element-button" href="#"><?php esc_html_e( 'Secondary action', 'oogle' ); ?></a></div>
 			<!-- /wp:button -->
 		</div>
 		<!-- /wp:buttons -->

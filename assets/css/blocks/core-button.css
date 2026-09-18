@@ -13,14 +13,13 @@
 	color: var(--wp--preset--color--base);
 }
 
-/* Outline buttons inside reversed/cover surfaces stay legible. */
+/* Outline buttons inside reversed/cover surfaces stay legible at rest. Their
+   hover/focus state is the one rule above (primary-deep fill, base text), so it
+   also holds for content that carries a "has-base-color" preset class: core
+   pins that colour with !important, and an inverted (base) fill would then put
+   base text on a base background (found in 1.0.1). */
 :where(.is-style-section-reversed, .is-style-section-primary, .wp-block-cover) .wp-block-button.is-style-outline > .wp-block-button__link {
 	color: var(--wp--preset--color--base);
-}
-
-:where(.is-style-section-reversed, .is-style-section-primary, .wp-block-cover) .wp-block-button.is-style-outline > .wp-block-button__link:hover {
-	background: var(--wp--preset--color--base);
-	color: var(--wp--preset--color--contrast);
 }
 
 /* Text-link button: keeps the Buttons layout and target size, looks like a link with an arrow. */
