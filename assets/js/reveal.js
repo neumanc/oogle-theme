@@ -3,16 +3,24 @@
  *
  * Adds "is-visible" to elements with the class "oogle-reveal" (or any
  * "oogle-reveal--*" variant) when they enter the viewport. All motion is CSS
- * (see assets/css/base.css). Nothing here runs when the user prefers reduced
- * motion, and content is fully visible without JavaScript: the hiding rules
- * only apply once <html> carries the "oogle-js-reveal" class, which this
- * module adds right before observing.
+ * (assets/css/reveal.css). Nothing here runs when the user prefers reduced
+ * motion or without IntersectionObserver, and content is fully visible
+ * without JavaScript: the hiding rules apply only to elements this module has
+ * registered, which it marks with "oogle-reveal-ready" the moment it starts
+ * observing them. Anything matching the selector that arrives later (a
+ * plugin, an Interactivity API region, infinite scroll) therefore stays
+ * visible until it is registered — never hidden by accident.
+ *
+ * Dynamic integrations register new markup by dispatching a bubbling
+ * "oogle:reveal" event on the inserted container (or on document):
+ *   node.dispatchEvent( new Event( 'oogle:reveal', { bubbles: true } ) );
+ * Registering the same element twice is a no-op.
  */
 const SEL = '[class*="oogle-reveal"]';
+const READY = 'oogle-reveal-ready';
 const RATIO = 0.12; // Share of the element that must be in view before it reveals.
 
 if ( ! window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches && 'IntersectionObserver' in window ) {
-	const root = document.documentElement;
 	const io = new IntersectionObserver(
 		( entries ) => {
 			for ( const entry of entries ) {
@@ -29,20 +37,30 @@ if ( ! window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches && 'Inter
 		{ rootMargin: '0px 0px -10% 0px', threshold: [ 0, RATIO ] }
 	);
 
-	const observe = ( scope ) => {
-		for ( const el of scope.querySelectorAll( SEL ) ) {
-			if ( ! el.classList.contains( 'is-visible' ) ) {
-				// Anything already in view on load is shown immediately (no flash on the first screen).
-				const r = el.getBoundingClientRect();
-				if ( r.top < window.innerHeight * 0.9 && r.bottom > 0 ) {
-					el.classList.add( 'is-visible' );
-				} else {
-					io.observe( el );
-				}
-			}
+	const register = ( el ) => {
+		if ( el.classList.contains( READY ) ) {
+			return;
+		}
+		// Anything already in view is shown immediately (no flash on the first screen).
+		const r = el.getBoundingClientRect();
+		if ( r.top < window.innerHeight * 0.9 && r.bottom > 0 ) {
+			el.classList.add( READY, 'is-visible' );
+		} else {
+			el.classList.add( READY );
+			io.observe( el );
 		}
 	};
 
-	root.classList.add( 'oogle-js-reveal' );
+	const observe = ( scope ) => {
+		if ( scope instanceof Element && scope.matches( SEL ) ) {
+			register( scope );
+		}
+		for ( const el of scope.querySelectorAll( SEL ) ) {
+			register( el );
+		}
+	};
+
+	document.documentElement.classList.add( 'oogle-js-reveal' );
 	observe( document );
+	document.addEventListener( 'oogle:reveal', ( e ) => observe( e.target instanceof Element ? e.target : document ) );
 }

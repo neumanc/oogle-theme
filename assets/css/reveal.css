@@ -3,72 +3,74 @@
  *
  * Enqueued by inc/assets.php only on pages where a block carries an
  * "oogle-reveal*" class, together with the module. Every hiding rule is scoped
- * to .oogle-js-reveal, which only the script adds, so without JavaScript (or
- * in the editor) everything is simply visible. Only opacity/transform/clip-path
- * animate: no layout, no CLS. The reduced-motion block in base.css cancels it.
+ * to .oogle-reveal-ready, which only the script adds to the elements it has
+ * registered with its observer, so without JavaScript (or in the editor, or
+ * for markup inserted after the module ran and not yet registered) everything
+ * is simply visible. Only opacity/transform/clip-path animate: no layout, no
+ * CLS. The reduced-motion block in base.css cancels it.
  */
 
-.oogle-js-reveal [class*="oogle-reveal"]:not(.is-visible) {
+.oogle-reveal-ready:not(.is-visible) {
 	opacity: 0;
 	transform: translateY(1.25rem);
 }
 
-.oogle-js-reveal .oogle-reveal--clip:not(.is-visible) {
+.oogle-reveal-ready.oogle-reveal--clip:not(.is-visible) {
 	transform: none;
 }
 
 /* The clip goes on the image, not on the observed element: a clip-path on
    the observed element itself gives IntersectionObserver an empty
    intersection rect, so the reveal would never fire (found in 0.3.0). */
-.oogle-js-reveal .oogle-reveal--clip img {
+.oogle-reveal-ready.oogle-reveal--clip img {
 	clip-path: inset(0 0 0 0);
 	transition: clip-path 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-.oogle-js-reveal .oogle-reveal--clip:not(.is-visible) img {
+.oogle-reveal-ready.oogle-reveal--clip:not(.is-visible) img {
 	clip-path: inset(0 0 100% 0);
 }
 
-.oogle-js-reveal .oogle-reveal--left:not(.is-visible) {
+.oogle-reveal-ready.oogle-reveal--left:not(.is-visible) {
 	transform: translateX(-1.5rem);
 }
 
-.oogle-js-reveal .oogle-reveal--right:not(.is-visible) {
+.oogle-reveal-ready.oogle-reveal--right:not(.is-visible) {
 	transform: translateX(1.5rem);
 }
 
 /* Photos settle into place: a small scale-down instead of a slide. */
-.oogle-js-reveal .oogle-reveal--scale:not(.is-visible) {
+.oogle-reveal-ready.oogle-reveal--scale:not(.is-visible) {
 	transform: scale(1.04);
 }
 
-.oogle-js-reveal [class*="oogle-reveal"] {
+.oogle-reveal-ready {
 	transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
 	will-change: opacity, transform;
 }
 
-.oogle-js-reveal [class*="oogle-reveal"].is-visible {
+.oogle-reveal-ready.is-visible {
 	opacity: 1;
 	transform: none;
 	will-change: auto;
 }
 
 /* Stagger: children of a revealed container enter one after another. */
-.oogle-js-reveal .oogle-reveal--stagger > * {
+.oogle-reveal-ready.oogle-reveal--stagger > * {
 	opacity: 0;
 	transform: translateY(1rem);
 	transition: opacity 0.6s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-.oogle-js-reveal .oogle-reveal--stagger.is-visible > * {
+.oogle-reveal-ready.oogle-reveal--stagger.is-visible > * {
 	opacity: 1;
 	transform: none;
 }
 
-.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(2) { transition-delay: 0.08s; }
-.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(3) { transition-delay: 0.16s; }
-.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(4) { transition-delay: 0.24s; }
-.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(5) { transition-delay: 0.32s; }
-.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(6) { transition-delay: 0.40s; }
-.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(7) { transition-delay: 0.48s; }
-.oogle-js-reveal .oogle-reveal--stagger.is-visible > :nth-child(8) { transition-delay: 0.56s; }
+.oogle-reveal-ready.oogle-reveal--stagger.is-visible > :nth-child(2) { transition-delay: 0.08s; }
+.oogle-reveal-ready.oogle-reveal--stagger.is-visible > :nth-child(3) { transition-delay: 0.16s; }
+.oogle-reveal-ready.oogle-reveal--stagger.is-visible > :nth-child(4) { transition-delay: 0.24s; }
+.oogle-reveal-ready.oogle-reveal--stagger.is-visible > :nth-child(5) { transition-delay: 0.32s; }
+.oogle-reveal-ready.oogle-reveal--stagger.is-visible > :nth-child(6) { transition-delay: 0.40s; }
+.oogle-reveal-ready.oogle-reveal--stagger.is-visible > :nth-child(7) { transition-delay: 0.48s; }
+.oogle-reveal-ready.oogle-reveal--stagger.is-visible > :nth-child(8) { transition-delay: 0.56s; }
