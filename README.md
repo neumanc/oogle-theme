@@ -63,6 +63,12 @@ new versions appear in Appearance → Themes, Dashboard → Updates, auto-update
 directory, so an update cannot overwrite client work. Procedure, guarantees and the
 tested upgrade: [UPGRADE.md](UPGRADE.md). Release mechanics: [docs/RELEASES.md](docs/RELEASES.md).
 
+The theme is one of three independent Oogle products. [Oogle Core](https://github.com/neumanc/oogle-core)
+(a plugin) can install and update the theme from the same GitHub Releases and shows its
+installed/active state on its dashboard, but the theme never requires Core: it detects
+nothing about Core, updates itself without it, and behaves identically whether Core is
+present, inactive or absent. Core reads the theme only through WordPress's theme APIs.
+
 ## Customization strategy
 
 The parent owns **slugs** (colors, font families, sizes, spacing, custom tokens), block

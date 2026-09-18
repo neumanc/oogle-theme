@@ -5,6 +5,10 @@ Versioning: see docs/RELEASES.md.
 
 ## [Unreleased]
 
+### Changed
+- README: describe the theme's place next to Oogle Core (which may install and
+  update it) and state that the theme never depends on Core. No code change.
+
 ## [1.0.0] — 2026-09-18
 
 Release-gate audit of the whole theme (code, architecture, security, performance,
