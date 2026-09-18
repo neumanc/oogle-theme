@@ -16,9 +16,14 @@ majors receive fixes only while a client site still runs them.
 The theme is presentation. It handles no form submissions, no AJAX or REST endpoints, no
 database queries of its own, no file uploads and no user input. Its only network activity
 is `inc/updates.php`, which reads the public GitHub Releases API over HTTPS (certificate
-verified, 10 s timeout, every field validated) to answer WordPress's own update check.
-No credential is stored in or read by the theme; an optional `OOGLE_GITHUB_TOKEN`
-constant in `wp-config.php` only raises the API rate limit.
+verified, 10 s timeout, redirects never followed, every field validated) to answer
+WordPress's own update check. The update package is accepted only when its URL is
+GitHub's own release-asset URL for the repository named in `Update URI`
+(`https://github.com/<owner>/<repo>/releases/download/<tag>/<asset>.zip`, exact host);
+anything else means no update is offered. No credential is stored in or read by the
+theme; an optional `OOGLE_GITHUB_TOKEN` constant in `wp-config.php` only raises the API
+rate limit and is sent to `api.github.com` alone — never to another host, a filtered URL
+or a redirect target.
 
 Security controls that belong to other layers are intentionally absent: authentication
 hardening, login throttling, REST restrictions, HTTP security headers, WAF rules, file

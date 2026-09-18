@@ -69,7 +69,7 @@ know that any particular client exists.
 | `style.css` | Header only. `Version:` is the single version declaration. |
 | `theme.json` | Settings and styles. Section styles for Groups live in `styles/*.json` with `blockTypes`. |
 | `functions.php` | Requires `inc/*.php`; no logic. |
-| `inc/<concern>.php` | One concern per file, every function `oogle_`-prefixed, every behaviour filterable with an `oogle/<file>/<thing>` filter. `declare(strict_types=1)`, typed signatures, `defined('ABSPATH') \|\| exit`. |
+| `inc/<concern>.php` | One concern per file, every function `oogle_`-prefixed, every behaviour filterable with an `oogle/<file>/<thing>` filter. `declare(strict_types=1)`, typed signatures — except the `$content` parameter of `render_block*` filter callbacks, which stays untyped with an `is_string()` guard so a plugin returning `null` earlier in the chain cannot fatal the site — `defined('ABSPATH') \|\| exit`. |
 | `templates/*.html` | Structural only: header part → `<main>` → content/query → footer part. No copy; copy that must be translatable goes in a hidden pattern. |
 | `parts/*.html` | `header`, `footer`, `navigation-overlay` are content and are overridden by the child. |
 | `patterns/*.php` | Core blocks only, presets only, canonical block markup (build in the editor, copy the code), placeholder copy that is obviously placeholder, `esc_html_e()`/`esc_url()` on every output. Hidden patterns are `hidden-*.php` with `Inserter: false`. |

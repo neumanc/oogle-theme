@@ -19,10 +19,17 @@ defined( 'ABSPATH' ) || exit;
  * The APG accordion pattern uses role="region" on the panel, labelled by
  * its heading button — which is exactly what core already points to.
  *
- * @param string $content Rendered block HTML.
- * @return string
+ * $content is untyped on purpose (see oogle_maybe_enqueue_script_modules()
+ * in inc/assets.php): a non-string from an earlier render_block filter is
+ * passed through rather than raised as a TypeError.
+ *
+ * @param mixed $content Rendered block HTML (string from core).
+ * @return mixed
  */
-function oogle_accordion_panel_role( string $content ): string {
+function oogle_accordion_panel_role( $content ) {
+	if ( ! is_string( $content ) ) {
+		return $content;
+	}
 	$p = new WP_HTML_Tag_Processor( $content );
 	if ( $p->next_tag( array( 'class_name' => 'wp-block-accordion-panel' ) ) && null === $p->get_attribute( 'role' ) ) {
 		$p->set_attribute( 'role', 'region' );

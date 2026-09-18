@@ -5,7 +5,7 @@ Versioning: see docs/RELEASES.md.
 
 ## [Unreleased]
 
-## [1.0.0] — 2026-09-17
+## [1.0.0] — 2026-09-18
 
 Release-gate audit of the whole theme (code, architecture, security, performance,
 accessibility, compatibility, packaging) before it becomes the parent of a second client
@@ -18,7 +18,13 @@ filter from 0.5.0 is kept.
   named `oogle-theme.zip`, requirements read from the tagged `style.css`, 6 h cache (1 h
   after a failure), extracted folder renamed to the theme directory if needed. Filters
   `oogle/updates/enabled`, `oogle/updates/request_args`, `oogle/updates/api_url`,
-  `oogle/updates/style_url`. Public repositories only; no secret bundled.
+  `oogle/updates/style_url`. Public repositories only; no secret bundled. Hardened
+  before release: redirects are never followed (a 3xx fails closed); the optional
+  `OOGLE_GITHUB_TOKEN` is sent to `api.github.com` only, attached after the request-args
+  filter so no filter or redirect can route it elsewhere; the package URL must be
+  GitHub's release-asset URL for the `Update URI` repository (exact host `github.com`,
+  https, no userinfo/port/query, matching owner/repo and asset name) and the release
+  page link must be on `github.com`, otherwise no update is offered.
 - `parts/comments.html` (core Comments block: list, pagination, form) in `single.html`.
   Renders nothing when comments are closed and none exist.
 - Patterns `oogle/hero-split` (text + `oogle-lcp` image, the hero for photos under ~1600px)
@@ -62,6 +68,10 @@ filter from 0.5.0 is kept.
   site is named anywhere in the parent outside this changelog's history.
 
 ### Fixed
+- `render_block` callbacks (`inc/assets.php`, `inc/images.php`, `inc/a11y.php`) no longer
+  type `$content` as `string`: a plugin returning `null` earlier in the filter chain used
+  to raise a `TypeError` and take the whole front end down; non-strings now pass through
+  untouched (verified against a null-returning mu-plugin: 500 before, 200 after).
 - Paragraphs inside constrained layouts were each rendered as a centred box of their own
   width: the 68ch `max-inline-size` combined with core's `margin-inline: auto !important`
   put body copy, lead and eyebrow paragraphs on three different left edges, and body copy

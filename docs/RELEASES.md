@@ -55,14 +55,22 @@ Procedure and the tested upgrade: [../UPGRADE.md](../UPGRADE.md).
 
 Unauthenticated GitHub API calls are limited to 60 per hour per IP; the cache keeps a site
 far below that. `define( 'OOGLE_GITHUB_TOKEN', '…' )` in `wp-config.php` raises the limit
-for hosts that share an IP; it is never bundled and never used for downloads. Private
-repositories are not supported by the built-in updater.
+for hosts that share an IP; it is never bundled, never used for downloads, and is sent
+only to `api.github.com` (the updater never follows redirects). Private repositories are
+not supported by the built-in updater.
+
+The asset's `browser_download_url` must be GitHub's own release-asset URL for the
+repository in `Update URI` — `https://github.com/<owner>/<repo>/releases/download/<tag>/oogle-theme.zip`
+(exact host, no port, userinfo, query or fragment; owner/repo case-insensitive). The real
+GitHub API always returns that form; a mocked response must too, or the release is
+rejected and no update is offered.
 
 ### Upgrade test recipe (mocked GitHub)
 
 In a lab install, add an mu-plugin that short-circuits `pre_http_request` for the three
 URLs the updater uses — `…/releases/latest` (JSON with `tag_name`, `assets[0].name =
-oogle-theme.zip`, `assets[0].browser_download_url`), the raw `style.css` at the tag, and
+oogle-theme.zip`, `assets[0].browser_download_url` in the exact form above), the raw
+`style.css` at the tag, and
 the zip download (write the local zip to `$args['filename']` when `stream` is set) — then
 `wp theme update oogle-theme` and compare file checksums and post/option counts before and
 after. This exercises the real updater and the real core upgrader with no network.

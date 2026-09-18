@@ -165,13 +165,18 @@ add_action( 'init', 'oogle_register_script_modules' );
 /**
  * Enqueue a module the first time a block with its trigger class renders.
  *
- * @param string               $content Block HTML.
+ * $content is deliberately untyped: a plugin earlier in the render_block
+ * chain may (wrongly) hand on null or another non-string, and a typed
+ * parameter would turn that into a fatal TypeError on every page. Anything
+ * that is not a string is passed through untouched.
+ *
+ * @param mixed                $content Block HTML (string from core).
  * @param array<string, mixed> $block   Parsed block.
- * @return string
+ * @return mixed
  */
-function oogle_maybe_enqueue_script_modules( string $content, array $block ): string {
+function oogle_maybe_enqueue_script_modules( $content, array $block ) {
 	static $done = array();
-	if ( is_admin() ) {
+	if ( ! is_string( $content ) || is_admin() ) {
 		return $content;
 	}
 	$class = $block['attrs']['className'] ?? '';

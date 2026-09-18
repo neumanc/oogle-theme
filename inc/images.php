@@ -53,11 +53,17 @@ add_filter( 'image_editor_output_format', 'oogle_image_output_format' );
  * content images and adds fetchpriority="high" to the first large one; this
  * makes the outcome deterministic for the one element we know is the LCP.
  *
- * @param string               $content Rendered block HTML.
+ * $content is untyped on purpose (see oogle_maybe_enqueue_script_modules()):
+ * a non-string from an earlier render_block filter is passed through.
+ *
+ * @param mixed                $content Rendered block HTML (string from core).
  * @param array<string, mixed> $block   Parsed block.
- * @return string
+ * @return mixed
  */
-function oogle_cover_lcp_attributes( string $content, array $block ): string {
+function oogle_cover_lcp_attributes( $content, array $block ) {
+	if ( ! is_string( $content ) ) {
+		return $content;
+	}
 	$class = $block['attrs']['className'] ?? '';
 	if ( ! is_string( $class ) || ! str_contains( $class, 'oogle-lcp' ) ) {
 		return $content;
@@ -85,11 +91,17 @@ add_filter( 'render_block_core/post-featured-image', 'oogle_cover_lcp_attributes
  * image. With loading="lazy" a slide that is display:none is not requested
  * at all until a script shows it (verified in Chromium and Firefox).
  *
- * @param string               $content Rendered block HTML.
+ * $content is untyped on purpose (see oogle_maybe_enqueue_script_modules()):
+ * a non-string from an earlier render_block filter is passed through.
+ *
+ * @param mixed                $content Rendered block HTML (string from core).
  * @param array<string, mixed> $block   Parsed block.
- * @return string
+ * @return mixed
  */
-function oogle_defer_image_attributes( string $content, array $block ): string {
+function oogle_defer_image_attributes( $content, array $block ) {
+	if ( ! is_string( $content ) ) {
+		return $content;
+	}
 	$class = $block['attrs']['className'] ?? '';
 	if ( ! is_string( $class ) || ! str_contains( $class, 'oogle-defer' ) ) {
 		return $content;

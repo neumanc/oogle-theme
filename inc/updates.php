@@ -17,13 +17,17 @@
  *    "Requires PHP" so core can refuse an update the host cannot run.
  *
  * Safety: read-only public API calls over HTTPS with certificate verification
- * (core default), 10 s timeout, every field validated before use, results
- * cached in a site transient (6 h; 1 h after a failure so a rate-limited or
- * offline host is not hammered). No secret is ever stored in the theme; an
- * optional OOGLE_GITHUB_TOKEN constant in wp-config.php only raises the API
- * rate limit. Private repositories are not supported: release assets of a
- * private repository cannot be downloaded by core's downloader. Use a public
- * repository (the theme is GPL) or a dedicated updater plugin.
+ * (core default), 10 s timeout, redirects never followed (a 3xx is a failure),
+ * every field validated before use, results cached in a site transient (6 h;
+ * 1 h after a failure so a rate-limited or offline host is not hammered). The
+ * package URL must be the release-asset URL on github.com for this very
+ * owner/repo/asset — anything else is rejected and no update is offered. No
+ * secret is ever stored in the theme; an optional OOGLE_GITHUB_TOKEN constant
+ * in wp-config.php only raises the API rate limit and is sent to api.github.com
+ * alone, never to any other host, filtered URL or redirect target. Private
+ * repositories are not supported: release assets of a private repository
+ * cannot be downloaded by core's downloader. Use a public repository (the
+ * theme is GPL) or a dedicated updater plugin.
  *
  * Nothing a site owns lives inside the parent directory (child theme,
  * mu-plugins, uploads, database), so replacing the directory is safe; the
@@ -80,33 +84,128 @@ function oogle_updates_enabled(): bool {
 }
 
 /**
+ * Hosts that may receive the OOGLE_GITHUB_TOKEN. Only the REST API is
+ * rate-limited in a way the token improves; style.css and the release asset
+ * are public files fetched anonymously. Deliberately not filterable.
+ *
+ * @return string[]
+ */
+function oogle_update_token_hosts(): array {
+	return array( 'api.github.com' );
+}
+
+/**
+ * Strictly parse an https URL and return its lower-cased host, or null when
+ * the URL is anything other than a plain https://host/path URL: no scheme or
+ * a non-https scheme, no host, userinfo ("user@"), an explicit port, or a
+ * host that is not a DNS name (IP literals are refused). The host is returned
+ * for EXACT comparison by the caller; nothing here treats subdomains or
+ * substrings as equivalent.
+ *
+ * @param string $url URL to parse.
+ * @return string|null
+ */
+function oogle_update_url_host( string $url ): ?string {
+	$parts = wp_parse_url( $url );
+	if ( ! is_array( $parts ) || empty( $parts['host'] ) || ! is_string( $parts['host'] ) ) {
+		return null;
+	}
+	if ( 'https' !== strtolower( (string) ( $parts['scheme'] ?? '' ) ) ) {
+		return null;
+	}
+	if ( isset( $parts['user'] ) || isset( $parts['pass'] ) || isset( $parts['port'] ) ) {
+		return null;
+	}
+	$host = strtolower( $parts['host'] );
+	if ( ! preg_match( '/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.[a-z][a-z0-9-]*$/', $host ) ) {
+		return null; // Not a dotted DNS name with an alphabetic TLD: rejects IPv4/IPv6 literals and single labels.
+	}
+	return $host;
+}
+
+/**
+ * Whether a release-asset URL is the one GitHub serves for this repository's
+ * asset: https://github.com/{owner}/{repo}/releases/download/{tag}/{asset},
+ * with no query string or fragment. Host comparison is exact; owner and
+ * repository are compared case-insensitively (GitHub treats them so); the
+ * asset file name must match exactly.
+ *
+ * @param string                           $url   browser_download_url from the API.
+ * @param array{owner:string, repo:string} $repo  Repository from the Update URI.
+ * @param string                           $asset Expected asset file name.
+ * @return bool
+ */
+function oogle_update_is_release_asset_url( string $url, array $repo, string $asset ): bool {
+	if ( 'github.com' !== oogle_update_url_host( $url ) ) {
+		return false;
+	}
+	$parts = wp_parse_url( $url );
+	if ( ! is_array( $parts ) || isset( $parts['query'] ) || isset( $parts['fragment'] ) || empty( $parts['path'] ) ) {
+		return false;
+	}
+	$segments = explode( '/', ltrim( (string) $parts['path'], '/' ) );
+	if ( 6 !== count( $segments ) ) {
+		return false;
+	}
+	list( $owner, $name, $releases, $download, $tag, $file ) = $segments;
+	return 0 === strcasecmp( rawurldecode( $owner ), $repo['owner'] )
+		&& 0 === strcasecmp( rawurldecode( $name ), $repo['repo'] )
+		&& 'releases' === $releases
+		&& 'download' === $download
+		&& '' !== $tag
+		&& rawurldecode( $file ) === $asset;
+}
+
+/**
  * Perform one GET against GitHub with sane defaults.
+ *
+ * Redirects are never followed: neither endpoint the updater uses redirects
+ * in normal operation, and core's HTTP layer re-sends the original headers —
+ * Authorization included — to whatever host a Location header names. A 3xx
+ * therefore fails closed (no update offered) instead of being chased.
+ *
+ * The token is attached only when the FINAL url (after filters) is https on
+ * a host in oogle_update_token_hosts(). Both the token and the no-redirect
+ * rule are applied after the request-args filter, so a filter can adjust
+ * timeouts or proxy settings but cannot re-enable redirects or redirect the
+ * token elsewhere.
  *
  * @param string $url    Absolute URL.
  * @param string $accept Accept header.
  * @return string|WP_Error Body on HTTP 200, WP_Error otherwise.
  */
 function oogle_update_http_get( string $url, string $accept ) {
-	$headers = array(
-		'Accept'     => $accept,
-		'User-Agent' => 'WordPress/' . get_bloginfo( 'version' ) . '; ' . home_url( '/' ),
-	);
-	if ( defined( 'OOGLE_GITHUB_TOKEN' ) && is_string( OOGLE_GITHUB_TOKEN ) && '' !== OOGLE_GITHUB_TOKEN ) {
-		$headers['Authorization'] = 'Bearer ' . OOGLE_GITHUB_TOKEN;
-	}
 	$args = array(
 		'timeout'     => 10,
-		'redirection' => 3,
-		'headers'     => $headers,
+		'redirection' => 0,
+		'headers'     => array(
+			'Accept'     => $accept,
+			'User-Agent' => 'WordPress/' . get_bloginfo( 'version' ) . '; ' . home_url( '/' ),
+		),
 	);
 
 	/**
 	 * Filter the request arguments for update checks (e.g. a proxy).
 	 *
+	 * The Authorization header is added after this filter runs and only for
+	 * trusted hosts, and 'redirection' is forced back to 0 afterwards; a
+	 * filter cannot cause the token to be sent elsewhere or a 3xx to be chased.
+	 *
 	 * @param array<string, mixed> $args wp_remote_get() arguments.
 	 * @param string               $url  Request URL.
 	 */
-	$args = (array) apply_filters( 'oogle/updates/request_args', $args, $url );
+	$args                = (array) apply_filters( 'oogle/updates/request_args', $args, $url );
+	$args['redirection'] = 0;
+
+	if (
+		defined( 'OOGLE_GITHUB_TOKEN' ) && is_string( OOGLE_GITHUB_TOKEN ) && '' !== OOGLE_GITHUB_TOKEN
+		&& in_array( oogle_update_url_host( $url ), oogle_update_token_hosts(), true )
+	) {
+		if ( ! isset( $args['headers'] ) || ! is_array( $args['headers'] ) ) {
+			$args['headers'] = array();
+		}
+		$args['headers']['Authorization'] = 'Bearer ' . OOGLE_GITHUB_TOKEN;
+	}
 
 	$response = wp_remote_get( $url, $args );
 	if ( is_wp_error( $response ) ) {
@@ -200,19 +299,25 @@ function oogle_update_fetch_release( array $repo ) {
 	}
 
 	// The package must be a release asset named after the theme directory
-	// (oogle-theme.zip or oogle-theme-1.2.3.zip), never GitHub's auto zipball.
+	// (oogle-theme.zip or oogle-theme-1.2.3.zip), never GitHub's auto zipball,
+	// and its download URL must be GitHub's own release-asset URL for this
+	// owner/repo/asset: exact host github.com, https, no userinfo/port/query.
 	$slug    = get_template();
 	$package = '';
 	foreach ( (array) ( $data['assets'] ?? array() ) as $asset ) {
-		if ( ! is_array( $asset ) || empty( $asset['name'] ) || empty( $asset['browser_download_url'] ) ) {
+		if ( ! is_array( $asset ) || empty( $asset['name'] ) || ! is_string( $asset['name'] ) || empty( $asset['browser_download_url'] ) || ! is_string( $asset['browser_download_url'] ) ) {
 			continue;
 		}
-		if ( preg_match( '/^' . preg_quote( $slug, '/' ) . '(?:-v?[0-9][0-9A-Za-z.-]*)?\.zip$/', (string) $asset['name'] ) ) {
-			$package = (string) $asset['browser_download_url'];
-			break;
+		if ( ! preg_match( '/^' . preg_quote( $slug, '/' ) . '(?:-v?[0-9][0-9A-Za-z.-]*)?\.zip$/', $asset['name'] ) ) {
+			continue;
 		}
+		if ( ! oogle_update_is_release_asset_url( $asset['browser_download_url'], $repo, $asset['name'] ) ) {
+			return new WP_Error( 'oogle_update_asset_url', sprintf( 'Release %s asset %s has an unexpected download URL.', $data['tag_name'], $asset['name'] ) );
+		}
+		$package = $asset['browser_download_url'];
+		break;
 	}
-	if ( '' === $package || 'https' !== wp_parse_url( $package, PHP_URL_SCHEME ) ) {
+	if ( '' === $package ) {
 		return new WP_Error( 'oogle_update_asset', sprintf( 'Release %s has no %s.zip asset.', $data['tag_name'], $slug ) );
 	}
 
@@ -237,7 +342,7 @@ function oogle_update_fetch_release( array $repo ) {
 
 	return array(
 		'version'      => $version,
-		'url'          => is_string( $data['html_url'] ?? null ) ? esc_url_raw( $data['html_url'] ) : '',
+		'url'          => is_string( $data['html_url'] ?? null ) && 'github.com' === oogle_update_url_host( $data['html_url'] ) ? esc_url_raw( $data['html_url'] ) : '',
 		'package'      => esc_url_raw( $package ),
 		'requires'     => $req['requires'],
 		'requires_php' => $req['requires_php'],
