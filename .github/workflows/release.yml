@@ -9,6 +9,7 @@ on:
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+']
 
+# contents: write is the one permission needed to create the Release and upload its assets.
 permissions:
   contents: write
 
@@ -16,7 +17,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Verify the tag matches style.css
         run: |
@@ -26,7 +27,12 @@ jobs:
           [ "$TAG" = "$VER" ] || (echo 'style.css Version does not match the tag' && exit 1)
           grep -qE "^## \[$TAG\]" CHANGELOG.md || (echo "CHANGELOG.md has no [$TAG] section" && exit 1)
 
-      - name: PHP syntax
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: PHP syntax (PHP 8.4, the supported floor)
         run: find . -name '*.php' -print0 | xargs -0 -n1 php -l
 
       - name: Build archive
@@ -42,7 +48,7 @@ jobs:
           awk -v tag="$TAG" '/^## \[/{p = index($0, "[" tag "]") > 0; if (!p && found) exit; if (p) found = 1} p' CHANGELOG.md > notes.md
           cat notes.md
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           name: ${{ github.ref_name }}
           body_path: notes.md

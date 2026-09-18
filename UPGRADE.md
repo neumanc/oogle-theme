@@ -18,7 +18,7 @@ rendering on every later 1.x.
 
 ## How updates arrive
 
-`style.css` declares `Update URI: https://github.com/oogle/oogle-theme`. WordPress calls
+`style.css` declares `Update URI: https://github.com/neumanc/oogle-theme`. WordPress calls
 the theme's `update_themes_github.com` handler (`inc/updates.php`) during its normal
 twice-daily check; the handler reads the latest GitHub Release and returns its version,
 release page and `oogle-theme.zip` asset. From there core does everything: the notice in
@@ -47,7 +47,7 @@ in the site mu-plugin.
 
 ## Tested upgrade (1.0.0 release gate)
 
-Performed on a clean WordPress 7.1 / PHP 8.3 install with a mocked GitHub API serving the
+Performed (historical, 17 September 2026) on a clean WordPress 7.1 / PHP 8.3 install — the supported floor is now PHP 8.4 — with a mocked GitHub API serving the
 real release artifact (docs/RELEASES.md has the recipe):
 
 1. Installed parent **0.5.0** from the tagged archive, the first client site's child theme and its

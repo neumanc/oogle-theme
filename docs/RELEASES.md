@@ -14,7 +14,7 @@ The theme's public API is what a child theme or site content can depend on:
 Renaming or removing any of these = **major**. Adding = **minor**. Everything else = **patch**.
 
 `1.0.0` was declared after the release-gate audit of 17 September 2026: clean-install,
-editor, accessibility, cross-browser, PHP 8.1/8.3/8.4, WordPress 7.0/7.1 and upgrade tests
+editor, accessibility, cross-browser, PHP 8.4, WordPress 7.0/7.1 and upgrade tests
 passed with the first client site as the proving ground. The second, unrelated site is
 the first consumer of the 1.x contract; anything it needs that the parent cannot express
 is added as a **minor** version, never by editing what exists.
@@ -80,9 +80,10 @@ after. This exercises the real updater and the real core upgrader with no networ
 - **WordPress:** the current major and the previous one (at 1.0.0: 7.1 and 7.0). A new
   WordPress major is tested within its release month; support for the oldest one is dropped
   in the next minor of the theme and `Requires at least` is raised then.
-- **PHP:** the versions receiving security support from php.net, floor 8.1 (at 1.0.0:
-  8.1–8.4 tested). The floor rises only in a theme major, and only once no client host runs
-  the old version.
+- **PHP:** 8.4 or newer only. Oogle controls its hosting, so there is no reason to carry
+  older runtimes or compatibility shims: `Requires PHP: 8.4`, PHPCompatibility `testVersion
+  8.4-`, and CI runs 8.4 (mandatory) plus the newest stable release. Compatibility is claimed
+  only for versions actually exercised; see CHANGELOG for what each release was tested on.
 - **Browsers:** current and previous major of Chrome, Edge, Firefox and Safari; newer CSS
   is used only where its absence degrades gracefully.
 

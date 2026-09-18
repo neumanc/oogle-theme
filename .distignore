@@ -9,6 +9,7 @@
 .DS_Store
 docs
 tools
+tests
 phpcs.xml.dist
 AGENTS.md
 CONTRIBUTING.md

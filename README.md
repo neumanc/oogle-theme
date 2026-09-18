@@ -8,7 +8,7 @@ values, fonts, header/footer content and site patterns; site functionality lives
 plugin. No page builder, no build step, no jQuery, no CSS or JS framework.
 
 - **Version:** 1.0.0 — see [CHANGELOG.md](CHANGELOG.md)
-- **Requires:** WordPress 7.0+ (tested on 7.0 and 7.1), PHP 8.1+ (tested on 8.1, 8.3, 8.4)
+- **Requires:** WordPress 7.0+ (tested on 7.0 and 7.1), PHP 8.4+ (tested on 8.4; see CHANGELOG for 8.5)
 - **License:** [GPL-2.0-or-later](LICENSE)
 - **Production dependencies:** none. WordPress core only.
 
@@ -42,7 +42,7 @@ oogle-theme/
 
 ## Installation
 
-1. Download `oogle-theme.zip` from the latest [GitHub Release](https://github.com/oogle/oogle-theme/releases)
+1. Download `oogle-theme.zip` from the latest [GitHub Release](https://github.com/neumanc/oogle-theme/releases)
    (or build it: `git archive --format=zip --prefix=oogle-theme/ v1.0.0 -o oogle-theme.zip`).
 2. Appearance → Themes → Add New → Upload, or unzip into `wp-content/themes/oogle-theme/`.
    The directory **must** be named `oogle-theme`; child themes reference it by that name.
@@ -56,7 +56,7 @@ Details, including the local lab: [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
 ## Updates
 
-`style.css` declares `Update URI: https://github.com/oogle/oogle-theme`. `inc/updates.php`
+`style.css` declares `Update URI: https://github.com/neumanc/oogle-theme`. `inc/updates.php`
 answers WordPress's own update check by reading the repository's latest GitHub Release, so
 new versions appear in Appearance → Themes, Dashboard → Updates, auto-updates and
 `wp theme update` like any other theme. Nothing a site owns lives inside the parent
@@ -84,7 +84,7 @@ Read: [docs/TOKENS.md](docs/TOKENS.md) (the contract), [docs/CHILD-THEMES.md](do
 
 There is nothing to build. Edit files, reload. Optional tooling, all dev-only:
 
-- **PHP**: `phpcs` with WordPress Coding Standards (`phpcs.xml.dist`), PHPCompatibility 8.1+, `php -l`.
+- **PHP**: `phpcs` with WordPress Coding Standards (`phpcs.xml.dist`), PHPCompatibility 8.4+, `php -l`.
 - **Everything else**: `jq` for JSON, `node --check` for the modules, a browser for the pattern
   validation snippet in docs/PATTERNS.md.
 - **CI** (`.github/workflows/ci.yml`) runs the same checks on every push and pull request.

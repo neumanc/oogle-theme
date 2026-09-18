@@ -13,6 +13,9 @@ site. No breaking change: every slug, block style, pattern, part, template, clas
 filter from 0.5.0 is kept.
 
 ### Added
+- `tests/updater-security.php` (115 mocked scenarios, run with and without a token) and
+  `tests/redirect-transport.php` (real WP HTTP transport, two local servers) — dev-only WP-CLI
+  harnesses, excluded from the release archive and from phpcs.
 - `inc/updates.php`: updates from GitHub Releases through WordPress's own `Update URI` /
   `update_themes_github.com` mechanism — latest non-draft, non-prerelease Release, asset
   named `oogle-theme.zip`, requirements read from the tagged `style.css`, 6 h cache (1 h
@@ -40,6 +43,13 @@ filter from 0.5.0 is kept.
   GitHub Release).
 
 ### Changed
+- GitHub Actions: every action pinned to a commit SHA, CI token read-only
+  (`permissions: contents: read`), release workflow lints on PHP 8.4 before archiving.
+- **Requires PHP: 8.4.** Oogle Theme supports PHP 8.4 or newer only (Oogle controls its
+  hosting). `phpcs.xml.dist` and CI use PHPCompatibility `testVersion 8.4-`; CI runs PHP 8.4
+  and 8.5. 1.0.0 was tested on PHP 8.4.25 and 8.5.10. No shims for older PHP.
+- Canonical repository is `https://github.com/neumanc/oogle-theme`; `Update URI`, README,
+  UPGRADE.md and the updater's trust anchor point there. (Product name stays Oogle Theme.)
 - `base.css` is now also loaded in the editor canvas (`add_editor_style`), followed by
   `editor.css`, which undoes the three document-level layout rules. Button targets,
   section adjacency, text wrapping and the header hairline now match between editor and
@@ -68,6 +78,10 @@ filter from 0.5.0 is kept.
   site is named anywhere in the parent outside this changelog's history.
 
 ### Fixed
+- `oogle_maybe_enqueue_script_modules()` no longer remembers that a module was enqueued:
+  core (6.9+) dequeues assets enqueued inside a block that renders empty, so a one-shot
+  flag could leave every later `oogle-reveal`/`oogle-rotator` block without its module.
+  Enqueueing is idempotent, so it simply runs for each triggering block.
 - `render_block` callbacks (`inc/assets.php`, `inc/images.php`, `inc/a11y.php`) no longer
   type `$content` as `string`: a plugin returning `null` earlier in the filter chain used
   to raise a `TypeError` and take the whole front end down; non-strings now pass through

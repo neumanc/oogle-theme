@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <ruleset name="Oogle Theme">
-	<description>WordPress Coding Standards for Oogle Theme (dev-only; install phpcs + WPCS globally).</description>
+	<description>WordPress Coding Standards for Oogle Theme (dev-only; install phpcs + WPCS globally; PHP 8.4 is the floor).</description>
 	<file>.</file>
 	<exclude-pattern>*/vendor/*</exclude-pattern>
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<!-- Dev-only WP-CLI test harness; not shipped, not held to the theme standard. -->
+	<exclude-pattern>*/tests/*</exclude-pattern>
 	<arg name="extensions" value="php"/>
 	<arg value="ps"/>
 	<rule ref="WordPress-Extra">
@@ -26,5 +28,5 @@
 		</properties>
 	</rule>
 	<config name="minimum_wp_version" value="7.0"/>
-	<config name="testVersion" value="8.1-"/>
+	<config name="testVersion" value="8.4-"/>
 </ruleset>

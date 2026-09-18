@@ -1,6 +1,6 @@
 # WordPress 7.x — verified behaviour that shaped decisions
 
-Verified on WordPress 7.1 / PHP 8.3 (Playground CLI and Docker) on 16 September 2026; re-verified on 7.0.4 and 7.1 (Docker, PHP 8.1/8.3/8.4) on 17 September 2026 for the 1.0.0 release gate.
+Historical note: originally verified on WordPress 7.1 / PHP 8.3 on 16 September 2026 and re-verified on 7.0.4 and 7.1 (PHP 8.1/8.3/8.4) on 17 September 2026 for the 1.0.0 audit. The supported floor is now PHP 8.4 (docs/RELEASES.md); the observations below are WordPress behaviours and do not depend on the PHP version. Originally recorded for the 1.0.0 release gate.
 
 ## Native blocks that removed planned custom work
 

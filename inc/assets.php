@@ -163,7 +163,12 @@ function oogle_register_script_modules(): void {
 add_action( 'init', 'oogle_register_script_modules' );
 
 /**
- * Enqueue a module the first time a block with its trigger class renders.
+ * Enqueue a module whenever a block with its trigger class renders.
+ *
+ * Deliberately not guarded by a "done" flag: since 6.9 core dequeues any
+ * asset enqueued while rendering a block whose final output is empty (a
+ * filter may blank a parent block), so a one-shot flag could leave later
+ * blocks without their module. Enqueueing is idempotent and cheap.
  *
  * $content is deliberately untyped: a plugin earlier in the render_block
  * chain may (wrongly) hand on null or another non-string, and a typed
@@ -175,7 +180,6 @@ add_action( 'init', 'oogle_register_script_modules' );
  * @return mixed
  */
 function oogle_maybe_enqueue_script_modules( $content, array $block ) {
-	static $done = array();
 	if ( ! is_string( $content ) || is_admin() ) {
 		return $content;
 	}
@@ -184,12 +188,11 @@ function oogle_maybe_enqueue_script_modules( $content, array $block ) {
 		return $content;
 	}
 	foreach ( oogle_script_modules() as $handle => $module ) {
-		if ( ! isset( $done[ $handle ] ) && str_contains( $class, $module['class'] ) ) {
+		if ( str_contains( $class, $module['class'] ) ) {
 			wp_enqueue_script_module( $handle );
 			if ( ! empty( $module['style'] ) ) {
 				wp_enqueue_style( $handle );
 			}
-			$done[ $handle ] = true;
 		}
 	}
 	return $content;

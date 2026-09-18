@@ -24,7 +24,7 @@ Theme Name: Example Site
 Template: oogle-theme
 Version: 1.0.0
 Requires at least: 7.0
-Requires PHP: 8.1
+Requires PHP: 8.4
 Text Domain: example
 */
 ```

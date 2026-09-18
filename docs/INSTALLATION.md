@@ -2,7 +2,7 @@
 
 ## Requirements
 
-WordPress 7.0 or later (tested on 7.0.4 and 7.1), PHP 8.1 or later (tested on 8.1, 8.3, 8.4). No Node, no Composer, no build.
+WordPress 7.0 or later (tested on 7.0.4 and 7.1), PHP 8.4 or later. No Node, no Composer, no build.
 
 ## Install the parent
 
@@ -22,12 +22,12 @@ own `parts/header.html` and `parts/footer.html`.
 images plus `wordpress:cli`. Mount the theme read-only and copy the production file set in
 (so the lab sees exactly what a release zip contains), install with `wp core install`,
 activate, seed content with `wp eval-file`. Pick the WordPress/PHP combination with the
-image tag (`wordpress:7.0`, `wordpress:7.1-php8.4`, `wordpress:php8.1`, …).
+image tag (`wordpress:7.1-php8.4`, `wordpress:php8.4`, …).
 
 **WordPress Playground CLI** (PHP-in-WASM, SQLite; needs only Node) is quicker for a look:
 
 ```sh
-npx @wp-playground/cli@latest server --port=9400 --php=8.3 --wp=latest \
+npx @wp-playground/cli@latest server --port=9400 --php=8.4 --wp=latest \
   --mount="$PWD/oogle-theme:/wordpress/wp-content/themes/oogle-theme" \
   --mount="$PWD/<site>/wp-content/themes/<site>:/wordpress/wp-content/themes/<site>" \
   --mount="$PWD/<site>/wp-content/mu-plugins:/wordpress/wp-content/mu-plugins" \
