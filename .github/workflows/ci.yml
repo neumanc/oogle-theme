@@ -55,7 +55,7 @@ jobs:
 
       - name: No client-specific strings in the parent
         run: |
-          ! grep -rniE 'precision|precisionkb|kissimmee|gohighlevel' --exclude-dir=.git --exclude=CHANGELOG.md --exclude-dir=.github --exclude=AGENTS.md . || (echo 'Client-specific reference found in the parent theme' && exit 1)
+          ! grep -rniE 'precision|precisionkb|kissimmee|gohighlevel' --exclude-dir=.git --exclude-dir=.github . || (echo 'Client-specific reference found in the parent theme' && exit 1)
 
   package:
     name: Build release archive (dry run)

@@ -43,6 +43,9 @@ filter from 0.5.0 is kept.
   GitHub Release).
 
 ### Changed
+- Earlier release notes no longer name the first client; the shipped CHANGELOG, like the
+  rest of the parent, carries no client business information, and the CI leak check now
+  covers every file in the repository.
 - GitHub Actions: every action pinned to a commit SHA, CI token read-only
   (`permissions: contents: read`), release workflow lints on PHP 8.4 before archiving.
 - **Requires PHP: 8.4.** Oogle Theme supports PHP 8.4 or newer only (Oogle controls its
@@ -105,7 +108,7 @@ filter from 0.5.0 is kept.
 
 ## [0.5.0] — 2026-09-17
 
-Phase 3 of the Precision site: nine core pages built on the framework. Four block
+Phase 3 of the first client site: nine core pages built on the framework. Four block
 styles were promoted from site CSS because a second page needed them.
 
 ### Added
@@ -127,7 +130,7 @@ styles were promoted from site CSS because a second page needed them.
 
 ## [0.4.0] — 2026-09-17
 
-Second pass of the Precision homepage (Phase 2.5): a rotating hero, a dark header, and
+Second pass of the first client homepage (Phase 2.5): a rotating hero, a dark header, and
 the fixes that a real design surfaced in 0.3.0's motion and form layers.
 
 ### Added
@@ -165,7 +168,7 @@ the fixes that a real design surfaced in 0.3.0's motion and form layers.
 
 ## [0.3.0] — 2026-09-16
 
-Purposeful motion and a custom-look form layer, driven by the Precision homepage redesign
+Purposeful motion and a custom-look form layer, driven by the first client homepage redesign
 (Phase 2.5). Still one theme script; still zero jQuery of our own.
 
 ### Added
@@ -181,7 +184,7 @@ Purposeful motion and a custom-look form layer, driven by the Precision homepage
 
 ## [0.2.0] — 2026-09-16
 
-First real page built on the framework (Precision Kitchen & Bath homepage) and first
+First real page built on the framework (the first client homepage) and first
 deployment to a LiteSpeed/cPanel host (WordPress 7.1, PHP 8.4).
 
 ### Added
@@ -200,7 +203,7 @@ deployment to a LiteSpeed/cPanel host (WordPress 7.1, PHP 8.4).
 ## [0.1.0] — 2026-09-16
 
 Framework skeleton, validated on WordPress 7.1 / PHP 8.3 with a proof-of-concept page and
-the Precision Kitchen & Bath child theme.
+the first client child theme.
 
 ### Added
 - `theme.json` v3 token contract: 12 semantic colors, 2 scrim gradients, 3 font-family slugs, 9 fluid font sizes, 8 spacing presets, 3 shadows, `custom.*` groups; presets-only editor settings.
