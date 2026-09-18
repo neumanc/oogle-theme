@@ -4,7 +4,8 @@
  * Enqueued by inc/assets.php whenever a block carries the "oogle-rotator"
  * class, whether or not the script runs: this file also defines the no-script
  * state (only the first slide is displayed). Not loaded in the editor, where
- * the slides are edited as an ordinary stack of Image blocks.
+ * the slides are edited as an ordinary stack of Image blocks. The slides are
+ * every direct child except the pause/play control the module appends.
  */
 
 .oogle-rotator {
@@ -13,7 +14,7 @@
 	isolation: isolate;
 }
 
-.oogle-rotator > * {
+.oogle-rotator > :not(.oogle-rotator__toggle) {
 	position: absolute;
 	inset: 0;
 	margin: 0;
@@ -21,11 +22,11 @@
 	z-index: 0;
 }
 
-.oogle-rotator > :not(:first-child):not(.is-queued) {
+.oogle-rotator > :not(:first-child, .is-queued, .oogle-rotator__toggle) {
 	display: none;
 }
 
-.oogle-rotator > * img {
+.oogle-rotator > :not(.oogle-rotator__toggle) img {
 	display: block;
 	inline-size: 100%;
 	block-size: 100%;
@@ -57,13 +58,51 @@
 }
 
 /* Once the script runs (is-active), the first slide is treated like any other. */
-.oogle-rotator.is-active > :first-child:not(.is-shown):not(.is-under) {
+.oogle-rotator.is-active > :first-child:not(.is-shown, .is-under) {
 	opacity: 0;
 	z-index: 0;
 }
 
+/* Paused by the visitor: no crossfade is scheduled, and the settle stops too. */
+.oogle-rotator.is-paused > :not(.oogle-rotator__toggle),
+.oogle-rotator.is-paused > :not(.oogle-rotator__toggle) img {
+	transition: none;
+}
+
+/* Pause / play control (added by the module only when it rotates). Top-end
+   corner: hero copy usually sits at the bottom or centre of a photo stack, so
+   this corner is the one least likely to be covered by an overlaid content
+   layer (a covered control is unreachable by pointer). A child theme may move
+   it, but must keep it reachable by pointer and keyboard. */
+.oogle-rotator__toggle {
+	position: absolute;
+	inset-block-start: var(--wp--preset--spacing--30);
+	inset-inline-end: var(--wp--preset--spacing--30);
+	z-index: 4;
+	display: grid;
+	place-items: center;
+	inline-size: 2.75rem;
+	block-size: 2.75rem;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: rgb(0 0 0 / 0.55);
+	color: #fff;
+	cursor: pointer;
+	box-shadow: 0 0 0 1px rgb(255 255 255 / 0.35);
+}
+
+.oogle-rotator__toggle:hover {
+	background: rgb(0 0 0 / 0.75);
+}
+
+.oogle-rotator__toggle:focus-visible {
+	outline: 2px solid #fff;
+	outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
-	.oogle-rotator > * img {
+	.oogle-rotator > :not(.oogle-rotator__toggle) img {
 		transform: none;
 	}
 }

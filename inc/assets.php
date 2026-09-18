@@ -163,6 +163,20 @@ function oogle_register_script_modules(): void {
 add_action( 'init', 'oogle_register_script_modules' );
 
 /**
+ * Translated labels for the rotator's pause/play control, printed by core as
+ * script-module data only when the module is enqueued.
+ *
+ * @param array<string, mixed> $data Existing data.
+ * @return array<string, mixed>
+ */
+function oogle_rotator_module_data( array $data ): array {
+	$data['pause'] = __( 'Pause slideshow', 'oogle' );
+	$data['play']  = __( 'Play slideshow', 'oogle' );
+	return $data;
+}
+add_filter( 'script_module_data_oogle-rotator', 'oogle_rotator_module_data' );
+
+/**
  * Enqueue a module whenever a block with its trigger class renders.
  *
  * Deliberately not guarded by a "done" flag: since 6.9 core dequeues any

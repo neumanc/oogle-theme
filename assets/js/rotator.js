@@ -8,13 +8,30 @@
  * image is requested before the page has loaded. The stable copy sits outside
  * the stack, so nothing meaningful rotates away: the images are decorative.
  *
+ * Because the rotation starts by itself, lasts longer than five seconds and
+ * runs beside the page's content, the module adds one pause/play control
+ * inside the stack (WCAG 2.2.2 Pause, Stop, Hide). Labels come from the
+ * script-module data inc/assets.php prints; English fallbacks are built in.
+ *
  * Does nothing under prefers-reduced-motion, without JavaScript, with a single
- * slide, while the tab is hidden, or while the stack is off screen.
+ * slide, while the tab is hidden, while the stack is off screen, or while
+ * paused by the visitor.
  */
 const HOLD = 6500; // ms a slide stays before the next fades in over it.
 const FADE = 1700; // must match the CSS transition on .is-shown.
+const TOGGLE = 'oogle-rotator__toggle';
 
 const reduced = window.matchMedia( '(prefers-reduced-motion: reduce)' );
+
+const labels = ( () => {
+	const defaults = { pause: 'Pause slideshow', play: 'Play slideshow' };
+	try {
+		const node = document.getElementById( 'wp-script-module-data-oogle-rotator' );
+		return node ? { ...defaults, ...JSON.parse( node.textContent ) } : defaults;
+	} catch {
+		return defaults;
+	}
+} )();
 
 if ( ! reduced.matches ) {
 	for ( const el of document.querySelectorAll( '.oogle-rotator' ) ) {
@@ -23,14 +40,15 @@ if ( ! reduced.matches ) {
 }
 
 function start( el ) {
-	const slides = [ ...el.children ];
-	if ( slides.length < 2 ) {
+	const slides = [ ...el.children ].filter( ( child ) => ! child.classList.contains( TOGGLE ) );
+	if ( slides.length < 2 || el.classList.contains( 'is-active' ) ) {
 		return;
 	}
 
 	let current = 0;
 	let timer = 0;
 	let onScreen = true;
+	let paused = false;
 	let busy = false; // A crossfade is being prepared; ignore re-entrant schedules.
 	slides[ 0 ].classList.add( 'is-shown' );
 	el.classList.add( 'is-active' );
@@ -55,7 +73,7 @@ function start( el ) {
 		const next = ( current + 1 ) % slides.length;
 		await prepare( next );
 		busy = false;
-		if ( reduced.matches || ! onScreen || document.hidden ) {
+		if ( reduced.matches || paused || ! onScreen || document.hidden ) {
 			schedule();
 			return;
 		}
@@ -71,10 +89,31 @@ function start( el ) {
 
 	const schedule = () => {
 		clearTimeout( timer );
-		if ( onScreen && ! document.hidden ) {
+		if ( ! paused && onScreen && ! document.hidden ) {
 			timer = setTimeout( show, HOLD );
 		}
 	};
+
+	// Pause / play control: the one mechanism WCAG 2.2.2 asks for.
+	const toggle = document.createElement( 'button' );
+	toggle.type = 'button';
+	toggle.className = TOGGLE;
+	toggle.setAttribute( 'aria-pressed', 'false' );
+	const setState = () => {
+		toggle.setAttribute( 'aria-pressed', paused ? 'true' : 'false' );
+		toggle.setAttribute( 'aria-label', paused ? labels.play : labels.pause );
+		toggle.innerHTML = paused
+			? '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>'
+			: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>';
+		el.classList.toggle( 'is-paused', paused );
+	};
+	toggle.addEventListener( 'click', () => {
+		paused = ! paused;
+		setState();
+		schedule();
+	} );
+	setState();
+	el.append( toggle );
 
 	document.addEventListener( 'visibilitychange', schedule );
 	if ( 'IntersectionObserver' in window ) {
