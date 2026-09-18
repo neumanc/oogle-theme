@@ -356,11 +356,6 @@
 					"enabled": false,
 					"allowEditing": true
 				}
-			},
-			"core/pullquote": {
-				"typography": {
-					"fontSize": true
-				}
 			}
 		}
 	},
