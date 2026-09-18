@@ -57,9 +57,14 @@
 	display: none;
 }
 
-/* Mosaic with captions: the caption sits over the bottom edge of its photo
-   and slides up on hover or keyboard focus. Pointer-less devices (no hover)
-   see it at rest, so touch users are not left without the label. */
+/* Mosaic with captions: the caption sits over the bottom edge of its photo.
+   It is visible by default — a caption is information, so it never depends
+   on a pointer. Only when the tile has something focusable (a link, or the
+   lightbox's "Enlarge" button) does it fold away on hover-capable devices,
+   because keyboard users can reveal it again with focus (:focus-within) and
+   mouse users with hover. Unlinked tiles with the lightbox off have no
+   focusable descendant, so their caption simply stays. Links inside a
+   caption remain clickable whenever the caption is shown. */
 .is-style-mosaic.oogle-mosaic--captions > .wp-block-image {
 	position: relative;
 }
@@ -75,22 +80,18 @@
 	font-size: var(--wp--preset--font-size--small);
 	line-height: 1.35;
 	background: linear-gradient(to top, rgb(0 0 0 / 0.7), rgb(0 0 0 / 0));
-	transform: translateY(0.75rem);
-	opacity: 0;
 	transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
-	pointer-events: none;
 }
 
-.is-style-mosaic.oogle-mosaic--captions > .wp-block-image:hover figcaption,
-.is-style-mosaic.oogle-mosaic--captions > .wp-block-image:focus-within figcaption {
-	opacity: 1;
-	transform: none;
+.is-style-mosaic.oogle-mosaic--captions > .wp-block-image figcaption a {
+	color: inherit;
 }
 
-@media (hover: none) {
-	.is-style-mosaic.oogle-mosaic--captions > .wp-block-image figcaption {
-		opacity: 1;
-		transform: none;
+@media (hover: hover) {
+	.is-style-mosaic.oogle-mosaic--captions > .wp-block-image:has(a, button):not(:hover, :focus-within) figcaption {
+		opacity: 0;
+		transform: translateY(0.75rem);
+		pointer-events: none;
 	}
 }
 
