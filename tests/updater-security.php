@@ -546,7 +546,52 @@ $res = $sel( $dir, array( 'theme' => get_template() ) );
 $rm( $dir );
 t( 'rejected package switches maintenance mode off again (no 503 until the 10-minute expiry)', is_wp_error( $res ) && ! file_exists( ABSPATH . '.maintenance' ) );
 if ( file_exists( ABSPATH . '.maintenance' ) ) { @unlink( ABSPATH . '.maintenance' ); }
+$bulk       = new Theme_Upgrader( new Automatic_Upgrader_Skin() );
+$bulk->bulk = true;
+$bulk->maintenance_mode( true ); // what Theme_Upgrader::bulk_upgrade() does for the batch
+$dir = $fixture( array( 'Theme Name' => 'Evil' ) );
+$res = oogle_update_source_selection( $dir, dirname( untrailingslashit( $dir ) ) . '/', $bulk, array( 'theme' => get_template() ) );
+$rm( $dir );
+t( 'bulk run: rejected package leaves maintenance mode to core (it ends it after the whole batch)', is_wp_error( $res ) && file_exists( ABSPATH . '.maintenance' ) );
+$bulk->maintenance_mode( false );
+if ( file_exists( ABSPATH . '.maintenance' ) ) { @unlink( ABSPATH . '.maintenance' ); }
 delete_site_transient( 'update_themes' );
+
+echo "\n== The theme stays the authority on its own update offer ==\n";
+// Another plugin (Oogle Manager does this at priority 20) answers whenever the value is
+// still false. Whatever it answers, the theme's own verdict must be what core receives.
+$cache_key = 'oogle_update_' . md5( 'neumanc/oogle-theme|' . get_template() );
+$foreign   = static function ( $update, $data, $stylesheet ) {
+	return false === $update ? array( 'theme' => $stylesheet, 'version' => '9.0.0', 'package' => 'https://example.com/foreign.zip' ) : $update;
+};
+$pushy     = static function ( $update, $data, $stylesheet ) {
+	return array( 'theme' => $stylesheet, 'version' => '9.9.9', 'package' => 'https://example.com/pushy.zip' );
+};
+$valid     = array(
+	'version'      => '1.99.0',
+	'url'          => 'https://github.com/neumanc/oogle-theme/releases/tag/v1.99.0',
+	'package'      => 'https://github.com/neumanc/oogle-theme/releases/download/v1.99.0/oogle-theme.zip',
+	'checksum'     => 'https://github.com/neumanc/oogle-theme/releases/download/v1.99.0/oogle-theme.zip.sha256',
+	'requires'     => '7.0',
+	'requires_php' => '8.4',
+);
+$check_own = static fn() => apply_filters( 'update_themes_github.com', false, array(), get_template() );
+add_filter( 'update_themes_github.com', $foreign, 20, 3 );
+set_site_transient( $cache_key, array( 'error' => 'declined for the test' ), HOUR_IN_SECONDS );
+t( 'theme declines (no valid release) → a later plugin\'s answer is not offered', false === $check_own() );
+set_site_transient( $cache_key, $valid, HOUR_IN_SECONDS );
+add_filter( 'oogle/updates/enabled', '__return_false' );
+t( 'updates switched off by the site → a later plugin\'s answer is not offered', false === $check_own() );
+remove_filter( 'oogle/updates/enabled', '__return_false' );
+$r = $check_own();
+t( 'theme answers → its own release is what core receives', is_array( $r ) && '1.99.0' === $r['version'] && $valid['package'] === $r['package'] );
+add_filter( 'update_themes_github.com', $pushy, 20, 3 );
+$r = $check_own();
+t( 'a plugin that overwrites any answer → still the theme\'s own release', is_array( $r ) && '1.99.0' === $r['version'] );
+t( 'another theme\'s check is left to other callbacks', '9.9.9' === ( apply_filters( 'update_themes_github.com', false, array(), 'some-other-theme' )['version'] ?? '' ) );
+remove_filter( 'update_themes_github.com', $foreign, 20 );
+remove_filter( 'update_themes_github.com', $pushy, 20 );
+delete_site_transient( $cache_key );
 
 $pass = $GLOBALS['oogle_t']['pass']; $fail = $GLOBALS['oogle_t']['fail'];
 echo "\nRESULT (" . ( $with_token ? 'token configured' : 'no token' ) . "): $pass passed, $fail failed\n";

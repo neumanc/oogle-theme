@@ -495,6 +495,32 @@ function oogle_update_check( $update, array $theme_data, string $theme_styleshee
 add_filter( 'update_themes_github.com', 'oogle_update_check', 10, 3 );
 
 /**
+ * Keep the theme the only authority on its own update offer.
+ *
+ * Every callback on update_themes_github.com sees this theme's check, and a
+ * plugin that answers whenever the value is still false (Oogle Manager does,
+ * at priority 20) would offer exactly the releases this theme declined on
+ * purpose: another major, a site that switched updates off with
+ * oogle/updates/enabled, or a release that failed validation. The upgrader
+ * would then refuse that package on upgrader_pre_download, leaving an update
+ * that is offered but always fails — or, on a site that opted out, one that
+ * succeeds. Running last and re-applying the theme's own (cached) answer
+ * closes that gap; no extra request is made.
+ *
+ * @param array<string, mixed>|false $update           Answer so far.
+ * @param array<string, mixed>       $theme_data       Theme headers.
+ * @param string                     $theme_stylesheet Theme directory being checked.
+ * @return array<string, mixed>|false
+ */
+function oogle_update_check_authoritative( $update, array $theme_data, string $theme_stylesheet ) {
+	if ( get_template() !== $theme_stylesheet ) {
+		return $update;
+	}
+	return oogle_update_check( false, $theme_data, $theme_stylesheet );
+}
+add_filter( 'update_themes_github.com', 'oogle_update_check_authoritative', PHP_INT_MAX, 3 );
+
+/**
  * Whether an upgrader run is replacing this parent theme, from the context
  * core passes to its hooks.
  *
@@ -710,7 +736,12 @@ function oogle_update_source_selection( $source, string $remote_source, WP_Upgra
 		// has already switched maintenance mode on for this run, and core only switches it
 		// off from upgrader_post_install — which a rejected source never reaches. Do not
 		// leave the site answering 503 for the 10-minute expiry because we refused a package.
-		$upgrader->maintenance_mode( false );
+		// A bulk run (which also covers the parent of an active child) is different: core
+		// holds maintenance mode for the whole batch and ends it itself, so switching it off
+		// here would expose the themes still being replaced after this one.
+		if ( empty( $upgrader->bulk ) ) {
+			$upgrader->maintenance_mode( false );
+		}
 		return $valid;
 	}
 
