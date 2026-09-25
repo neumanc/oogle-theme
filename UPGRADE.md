@@ -45,6 +45,46 @@ declared requirements this host meets, a valid `theme.json` and `templates/index
 package that fails either gate leaves the installed theme untouched; the message names the
 reason.
 
+## With a child theme active
+
+This is the normal production configuration, and it is what CI and the upgrade tests run.
+
+- **What is replaced.** Only `wp-content/themes/oogle-theme/`. The updater works on
+  `get_template()` — the parent's directory — whichever theme is active. The child's
+  directory is never an upgrader target of the parent's updater: the parent's update check
+  ignores every other theme, and its download and package gates pass any other theme's
+  upgrade through untouched. A child package offered as the parent is refused (it has a
+  `Template` header).
+- **The child keeps working** because, within a major, nothing in
+  [docs/EXTENSION-API.md](docs/EXTENSION-API.md) changes. Only releases of the installed
+  major are offered, so a child is never moved onto a new contract automatically.
+- **One authority.** Only the theme decides what update is offered for the parent. Another
+  plugin that answers `update_themes_github.com` (Oogle Manager does) cannot offer a
+  release the theme declined — another major, a site with updates switched off, or a
+  release that failed validation.
+- **Maintenance mode.** Core's bulk path (Appearance → Themes, Dashboard → Updates,
+  `wp theme update`) enables maintenance mode when the parent of the active child is
+  updated. Core's single-theme path (automatic background updates) enables it only for the
+  active stylesheet, i.e. not for a parent. There the directory swap is a rename of a
+  complete, verified directory (core moves the old copy to
+  `wp-content/upgrade-temp-backup/` first and restores it if the move fails), so the window
+  is milliseconds; with an aggressive page cache, prefer updating through Dashboard →
+  Updates or WP-CLI, then purge the cache.
+- **Tested** (lab, WordPress 7.1 / PHP 8.4, fixture child active, mocked GitHub serving a
+  real package): bulk and single paths both moved the parent to the new version with the
+  child's files, the active theme, theme mods and content unchanged and the installed files
+  byte-identical to the package; a tampered package was refused at the checksum gate (single
+  path) with everything left untouched and maintenance mode off; a competing update filter offering 2.0.0 did not change the
+  offer (1.1.0).
+
+**If the parent directory is ever missing or broken** (a failed manual copy, a host
+restore): do not open Appearance → Themes or the Customizer first. Those two screens run
+core's `validate_current_theme()`, which switches a site whose parent is missing to the
+default theme. Restore the parent first (upload the release zip over FTP/SSH into
+`wp-content/themes/oogle-theme/`, or restore the backup), then reload; the child and its
+settings come back as they were. If the site was already switched, re-activate the child —
+theme mods are stored per theme and are still there.
+
 ## Procedure for a client site
 
 1. Read the release notes (CHANGELOG.md) for the version you are moving to. A **major**

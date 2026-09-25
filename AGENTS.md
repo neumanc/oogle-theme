@@ -23,7 +23,7 @@ know that any particular client exists.
    token. CSS consumes `--wp--preset--*` / `--wp--custom--*`; it never invents a second token
    scheme or hard-codes hex/px values (documented exceptions: white text over a black scrim,
    `50%` for circles).
-5. **Slugs are the API.** Palette, gradient, font, size, spacing and custom slugs, block style
+5. **Slugs are the API.** The full public list is docs/EXTENSION-API.md; anything not on it is internal. Palette, gradient, font, size, spacing and custom slugs, block style
    names (`is-style-*`), pattern slugs (`oogle/*`), template and part names, `oogle-*` class
    names and `oogle/*` filter names are public. Renaming or removing one is a **major**
    version. Adding is minor. Arrays of presets in a child *replace* the parent's, so adding a
@@ -97,5 +97,6 @@ cascade layers (core is unlayered), no `!important` except the two documented us
 - [ ] Patterns validate (`docs/PATTERNS.md` snippet) and insert without "invalid content"
 - [ ] Clean-install walk: home, page, post with comments, archive, search, 404, editor, Site Editor; `debug.log` empty
 - [ ] axe: 0 violations on the pages you touched; keyboard walk of any interactive change
+- [ ] Child-theme suites pass in both configurations (`tests/child-theme.php` with `oogle-theme` and with `oogle-fixture-child` active, `tests/child-theme-http.sh`); a new public API is added to docs/EXTENSION-API.md and exercised by the fixture
 - [ ] No client name, URL, phone, colour or copy in the parent (the CI grep for client names must pass)
 - [ ] CHANGELOG entry under *Unreleased*

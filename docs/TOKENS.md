@@ -57,7 +57,11 @@ use `alignfull` with an inner constrained group when a section needs more.
 
 `color.error` (form validation; a custom token rather than a palette entry so a child that
 does not override it inherits it — `settings.custom` merges, preset arrays replace) ·
-`radius.{sm,md,lg,full}` · `border.width` · `measure.prose` (68ch; available to children,
+`radius.{sm,md,lg,full}` · `border.width` ·
+`card.{background,borderColor,radius,shadow,padding}` (1.1; the Card and Card-flush block
+styles read only these, defaulting to `base`, `line`, `radius.md`, `shadow.sm`, spacing `50`) ·
+`control.radius` (1.1; buttons, the search field and Gravity Forms controls; defaults to
+`radius.sm`) · `measure.prose` (68ch; available to children,
 not applied by the parent since 1.0.0 — see CSS.md) · `section.{tight,base,loose}` (fluid
 section padding) · `transition.{fast,base}` · `font.weight.*` · `target.min` (44px) ·
 `z.{header,overlay}` (`overlay` is reserved; core's own overlay uses its own z-index).

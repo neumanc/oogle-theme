@@ -5,6 +5,51 @@ Versioning: see docs/RELEASES.md.
 
 ## [Unreleased]
 
+Child-theme platform readiness. Additions only, so the next release is a **minor**
+(proposed 1.1.0). No breaking change: every slug, block style, pattern, part, template,
+class and filter of 1.0.x is kept. Full-page screenshots (home, a pattern page, search;
+1280 and 375 px) are byte-identical before and after, both for the parent alone and with
+the first client child active.
+
+### Added
+- `settings.custom.card.{background,borderColor,radius,shadow,padding}` and
+  `settings.custom.control.radius`. The Card / Card (flush media) block styles, buttons,
+  the search field and Gravity Forms controls read them; defaults reproduce 1.0 exactly. A
+  child restyles every card or control by setting a value.
+- `oogle-dark` class: marks a child's own dark surface (header, footer, band) so it gets
+  the on-dark focus ring, outline/text buttons, lead and eyebrow colours the parent's dark
+  section styles and Cover already had.
+- `docs/EXTENSION-API.md` — the public/internal contract for child themes;
+  `docs/PLATFORM.md` — what belongs in the theme, Core, the child, content, Rank Math and
+  Gravity Forms, the Core audit, and the proposed accommodation module. CHILD-THEMES.md
+  rewritten as a build guide; RELEASES.md defines breaking vs non-breaking precisely;
+  UPGRADE.md documents parent updates with a child active and recovery.
+- Fixture child theme (`tests/fixtures/oogle-fixture-child`, never shipped) and the
+  `child` CI job: contract suite in both configurations (`tests/child-theme.php`), front-end
+  render over HTTP (`tests/child-theme-http.sh`), updater suite with the child active,
+  WPCS and theme.json schema checks for the fixture. The release gate runs it.
+
+### Fixed
+- Updater: the theme is now the only authority on its own update offer. Another callback
+  on `update_themes_github.com` (Oogle Manager answers whenever the value is still
+  `false`) could offer a release the theme had declined — another major, a site with
+  `oogle/updates/enabled` off, or a release that failed validation — which then failed at
+  the checksum gate, or on an opted-out site was applied.
+- Updater: a package rejected during a **bulk** run no longer switches maintenance mode off
+  before core has finished the batch.
+- `oogle/assets/script_modules`: an entry naming a file the parent does not ship is no
+  longer registered (it produced a URL that 404s). The docblocks of this filter and
+  `oogle/assets/block_styles` now say what was always true: files resolve inside the
+  parent; a child uses `wp_enqueue_block_style()` / `wp_register_script_module()`.
+
+### Documented
+- `assets/css/base.css` and `assets/css/editor.css` are reserved paths in a child: core
+  resolves the parent's editor styles child-first, so a child file there would replace
+  them in the editor (verified; now guarded by the fixture suite).
+- Parent template patterns (`oogle/query-cards`, `oogle/hidden-404`, …) are supported
+  override points: a child pattern with the same slug replaces them without copying
+  templates.
+
 ## [1.0.1] — 2026-09-18
 
 Production hardening from an independent audit of 1.0.0. No breaking change: every slug,

@@ -2,16 +2,40 @@
 
 ## Semantic versioning, with a theme-specific definition of "breaking"
 
-The theme's public API is what a child theme or site content can depend on:
+The theme's public API is exactly what [EXTENSION-API.md](EXTENSION-API.md) lists — what
+child themes and site content may depend on:
 
-- `theme.json` slugs (colors, gradients, font families, font sizes, spacing, custom keys)
-- block style names (`is-style-card`, …) and section style slugs
-- pattern slugs and their heading structure
-- template and template-part names
-- CSS class names documented in the docs (`oogle-header`, `oogle-lcp`, `oogle-section`)
-- filter names (`oogle/...`)
+- `theme.json` preset slugs (colours, gradients, font families, font sizes, spacing,
+  shadows) and `settings.custom` keys, i.e. the `--wp--preset--*` / `--wp--custom--*`
+  variables they generate
+- block style names (`is-style-card`, …) and section style slugs and file names
+- pattern slugs (including the template patterns a child may override) and their heading
+  structure
+- template and template-part names and areas, and the template contract (header part →
+  `<main>` → footer part; template copy from the template patterns)
+- the documented `oogle-*` classes and the `oogle:reveal` event
+- the `oogle-base` style handle and the `OOGLE_VERSION` constant
+- filter names (`oogle/...`), their arguments, accepted return values and defaults
 
-Renaming or removing any of these = **major**. Adding = **minor**. Everything else = **patch**.
+| Release | May contain | A child theme built for the previous release |
+|---|---|---|
+| **PATCH** `x.y.Z` | Bug fixes, security fixes, performance work, internal refactoring, documentation; CSS fixes that correct a defect | keeps working with no change |
+| **MINOR** `x.Y.0` | Everything a patch may contain, plus **additions**: new tokens, block styles, patterns, templates, parts, classes, filters, filter arguments appended at the end; a new required WordPress version inside the support policy; visually safe tuning of default token values | keeps working with no change; it may adopt the additions |
+| **MAJOR** `X.0.0` | Breaking changes to the public API | may need changes; the CHANGELOG gives a search-and-replace recipe; sites are never moved to a new major automatically |
+
+**Breaking (major only):** removing or renaming anything listed above; changing a filter's
+arguments, their order, the meaning of its return value or its default; removing a
+`settings.custom` key or changing what a token controls; adding a **preset** slug (preset
+arrays replace, so every child would have to declare it — use `settings.custom`, which
+merges, instead); changing a part's name or area, or removing a template; making a
+template stop using its template pattern; raising `Requires PHP` or `Requires at least`
+outside the compatibility policy below; changing the updater's release contract (asset
+name, `.sha256` sidecar, tag format) in a way already-installed parents cannot follow.
+
+**Not a compatibility contract** (may change in any release): PHP function names, internal
+constants (`OOGLE_DIR`, `OOGLE_URI`), handles other than `oogle-base`, file paths under
+`assets/` and `inc/`, selectors and specificity, script state classes, pattern inner markup
+and placeholder copy, default token values within reason, updater internals.
 
 `1.0.0` was declared after the release-gate audit of 17 September 2026: clean-install,
 editor, accessibility, cross-browser, PHP 8.4, WordPress 7.0/7.1 and upgrade tests
@@ -37,7 +61,9 @@ section at release.
    syntax, WPCS, PHPCompatibility 8.4+, JSON, official theme.json schema validation for
    every supported WordPress version, JavaScript syntax, client-leak and secret scans, the
    updater and package-validation suites plus the redirect transport test on a real
-   WordPress 7.1 / PHP 8.4, and an archive dry run. Only when every job has passed does the
+   WordPress 7.1 / PHP 8.4, the child-theme compatibility suites (parent alone and the
+   fixture child in `tests/fixtures/`, including a front-end render over HTTP and the
+   updater suite with the child active), and an archive dry run. Only when every job has passed does the
    release job verify that the tag is an ancestor of `main` and matches `style.css`,
    `readme.txt` and the CHANGELOG, build `oogle-theme.zip` with
    `git archive --format=zip --prefix=oogle-theme/ vX.Y.Z` (dev files excluded by
@@ -83,13 +109,18 @@ rejected and no update is offered.
 
 ### Upgrade test recipe (mocked GitHub)
 
-In a lab install, add an mu-plugin that short-circuits `pre_http_request` for the three
-URLs the updater uses — `…/releases/latest` (JSON with `tag_name`, `assets[0].name =
-oogle-theme.zip`, `assets[0].browser_download_url` in the exact form above), the raw
-`style.css` at the tag, and
-the zip download (write the local zip to `$args['filename']` when `stream` is set) — then
-`wp theme update oogle-theme` and compare file checksums and post/option counts before and
-after. This exercises the real updater and the real core upgrader with no network.
+In a lab install, add an mu-plugin that short-circuits `pre_http_request` for the four
+URLs the updater uses — `https://api.github.com/repos/<owner>/<repo>/releases?per_page=30`
+(a JSON list of releases, each with `tag_name`, `draft`, `prerelease` and `assets` named
+`oogle-theme.zip` and `oogle-theme.zip.sha256` whose `browser_download_url` has the exact
+form above), the raw `style.css` at the tag, the `.sha256` sidecar, and the zip download
+(write the local zip to `$args['filename']` when `stream` is set) — then run
+`wp theme update oogle-theme` (bulk path) and `Theme_Upgrader::upgrade()` (the path
+automatic updates use), with a **child theme active**, and compare the child's file
+checksums, the active theme, theme mods and post counts before and after. Include a
+tampered zip (must be refused with the parent untouched) and a competing
+`update_themes_github.com` callback offering another version (the theme's own offer must
+win). This exercises the real updater and the real core upgrader with no network.
 
 ## Compatibility policy
 

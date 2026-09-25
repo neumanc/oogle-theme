@@ -18,6 +18,20 @@ own `parts/header.html` and `parts/footer.html`.
 
 ## Running a local lab
 
+**wp-env** (what CI runs): `npx @wordpress/env@11 start` from the repository root starts
+WordPress 7.1 on PHP 8.4 with the parent and the fixture child
+(`tests/fixtures/oogle-fixture-child`) installed. Set `WP_ENV_PORT` / `WP_ENV_TESTS_PORT`
+if 8888/8889 are taken. Then, for example:
+
+```sh
+npx @wordpress/env@11 run cli wp theme activate oogle-fixture-child
+npx @wordpress/env@11 run cli wp eval-file wp-content/themes/oogle-theme/tests/child-theme.php
+bash tests/child-theme-http.sh http://localhost:8888 child
+```
+
+The repository is bind-mounted: do not `git stash -u` or switch to a branch without the
+fixture while the lab runs, or the fixture's mount goes stale (restart wp-env).
+
 **Docker** (used for the 1.0.0 release gate): the official `wordpress` and `mariadb`
 images plus `wordpress:cli`. Mount the theme read-only and copy the production file set in
 (so the lab sees exactly what a release zip contains), install with `wp core install`,

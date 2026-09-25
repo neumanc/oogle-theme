@@ -87,7 +87,9 @@ owns is a breaking change (major version).
 | Site mu-plugin | functionality that must survive a theme switch | post types, taxonomies, CRM bridge, analytics |
 | Server / CDN | HTTP, TLS, caching, security headers, WAF | `.htaccess`, LiteSpeed, Cloudflare |
 
-Read: [docs/TOKENS.md](docs/TOKENS.md) (the contract), [docs/CHILD-THEMES.md](docs/CHILD-THEMES.md),
+Read: [docs/EXTENSION-API.md](docs/EXTENSION-API.md) (the public contract), [docs/PLATFORM.md](docs/PLATFORM.md)
+(what goes in the theme, Core, the child, content, Rank Math, Gravity Forms),
+[docs/TOKENS.md](docs/TOKENS.md), [docs/CHILD-THEMES.md](docs/CHILD-THEMES.md),
 [docs/PATTERNS.md](docs/PATTERNS.md), [docs/CSS.md](docs/CSS.md), [docs/JAVASCRIPT.md](docs/JAVASCRIPT.md).
 
 ## Development
