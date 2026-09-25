@@ -60,8 +60,11 @@ add_action( 'wp_enqueue_scripts', 'oogle_enqueue_base' );
 /**
  * Per-block stylesheets.
  *
- * Map of block name => file in assets/css/blocks/. Filterable so a child can
- * add its own per-block file or remove one of ours.
+ * Map of block name => file in the PARENT's assets/css/blocks/. Filterable so
+ * a child or plugin can remove one of ours (or point a block at another of
+ * ours). Files always resolve inside the parent theme; an entry naming a file
+ * the parent does not ship is skipped. A child attaches its own per-block
+ * stylesheet with core's wp_enqueue_block_style() (docs/CHILD-THEMES.md).
  *
  * @return array<string, string>
  */
@@ -123,6 +126,10 @@ add_action( 'init', 'oogle_enqueue_block_styles' );
  * render_block still prints in the head. All are small, deferred,
  * dependency-free ES modules.
  *
+ * Files resolve inside the parent theme; the filter below can remove a module
+ * or change its trigger class. A child registers its own modules with core's
+ * wp_register_script_module() / wp_enqueue_script_module().
+ *
  * @return array<string, array{file:string, class:string, style?:string}>
  */
 function oogle_script_modules(): array {
@@ -154,6 +161,11 @@ function oogle_script_modules(): array {
  */
 function oogle_register_script_modules(): void {
 	foreach ( oogle_script_modules() as $handle => $module ) {
+		// An entry naming a file the parent does not ship would register a URL
+		// that 404s. Left unregistered, its later enqueue is a silent no-op.
+		if ( empty( $module['file'] ) || ! is_readable( OOGLE_DIR . '/' . $module['file'] ) ) {
+			continue;
+		}
 		wp_register_script_module( $handle, OOGLE_URI . '/' . $module['file'], array(), oogle_asset_version( $module['file'] ) );
 		if ( ! empty( $module['style'] ) ) {
 			wp_register_style( $handle, OOGLE_URI . '/' . $module['style'], array( 'oogle-base' ), oogle_asset_version( $module['style'] ) );
