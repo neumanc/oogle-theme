@@ -48,6 +48,9 @@ jobs:
       - name: PHPCompatibility 8.4+
         run: ~/.composer/vendor/bin/phpcs --standard=PHPCompatibilityWP --runtime-set testVersion 8.4- --extensions=php -p .
 
+      - name: PHPCS on the fixture child (the standard a client child is held to)
+        run: ~/.composer/vendor/bin/phpcs --standard=tests/fixtures/phpcs.xml.dist
+
   static:
     name: JSON schema, JavaScript, leaks, secrets
     runs-on: ubuntu-latest
@@ -60,7 +63,7 @@ jobs:
 
       - name: JSON parses
         run: |
-          for f in theme.json styles/*.json; do jq -e . "$f" >/dev/null && echo "ok $f"; done
+          for f in theme.json styles/*.json tests/fixtures/*/theme.json tests/fixtures/*/styles/*.json; do jq -e . "$f" >/dev/null && echo "ok $f"; done
 
       - name: theme.json and style variations validate against the official WordPress 7.0 and 7.1 schemas
         run: bash tools/validate-theme-json.sh 7.0 7.1
@@ -103,6 +106,42 @@ jobs:
 
       - name: Editor allow-list composition suite
         run: npx -y @wordpress/env@11 run cli wp eval-file wp-content/themes/oogle-theme/tests/editor-allowlist.php
+
+      - name: No PHP warnings or notices were logged
+        run: |
+          npx -y @wordpress/env@11 run cli sh -c 'if [ -s wp-content/debug.log ]; then cat wp-content/debug.log; exit 1; fi; echo "debug.log empty"'
+
+  child:
+    name: Child-theme compatibility (parent alone and fixture child) on WordPress 7.1 / PHP 8.4
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+
+      - name: Start WordPress (wp-env; mounts the parent and tests/fixtures/oogle-fixture-child)
+        run: npx -y @wordpress/env@11 start
+
+      - name: Parent alone — contract suite
+        run: |
+          npx -y @wordpress/env@11 run cli wp theme activate oogle-theme
+          npx -y @wordpress/env@11 run cli wp eval-file wp-content/themes/oogle-theme/tests/child-theme.php
+
+      - name: Parent alone — front-end render
+        run: bash tests/child-theme-http.sh http://localhost:8888 parent
+
+      - name: Fixture child — contract suite
+        run: |
+          npx -y @wordpress/env@11 run cli wp theme activate oogle-fixture-child
+          npx -y @wordpress/env@11 run cli wp eval-file wp-content/themes/oogle-theme/tests/child-theme.php
+
+      - name: Fixture child — front-end render
+        run: bash tests/child-theme-http.sh http://localhost:8888 child
+
+      - name: Fixture child — updater suite with a child active
+        run: npx -y @wordpress/env@11 run cli wp eval-file wp-content/themes/oogle-theme/tests/updater-security.php
 
       - name: No PHP warnings or notices were logged
         run: |

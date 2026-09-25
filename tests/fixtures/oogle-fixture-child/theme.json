@@ -1,0 +1,57 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/theme.json",
+	"version": 3,
+	"title": "Oogle Fixture Child",
+	"description": "A deliberately different identity built only from values: the palette and font families replace the parent's arrays (every slug declared), settings.custom keys merge one by one.",
+	"settings": {
+		"color": {
+			"palette": [
+				{ "slug": "base", "name": "Base", "color": "#fbf8f1" },
+				{ "slug": "surface", "name": "Surface", "color": "#efe6d2" },
+				{ "slug": "contrast", "name": "Contrast", "color": "#14261d" },
+				{ "slug": "contrast-soft", "name": "Contrast soft", "color": "#2f4337" },
+				{ "slug": "muted", "name": "Muted", "color": "#5a5f55" },
+				{ "slug": "line", "name": "Line", "color": "#d8ccb1" },
+				{ "slug": "primary", "name": "Primary", "color": "#2e6b4f" },
+				{ "slug": "primary-deep", "name": "Primary deep", "color": "#1d4a36" },
+				{ "slug": "primary-tint", "name": "Primary tint", "color": "#e3efe7" },
+				{ "slug": "accent", "name": "Accent", "color": "#8a5a12" },
+				{ "slug": "accent-deep", "name": "Accent deep", "color": "#6b450c" },
+				{ "slug": "accent-tint", "name": "Accent tint", "color": "#f5ead6" }
+			]
+		},
+		"typography": {
+			"fontFamilies": [
+				{ "slug": "heading", "name": "Heading", "fontFamily": "'Avenir Next', Avenir, 'Segoe UI', system-ui, sans-serif" },
+				{ "slug": "body", "name": "Body", "fontFamily": "Charter, 'Bitstream Charter', Georgia, serif" },
+				{ "slug": "mono", "name": "Monospace", "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" }
+			]
+		},
+		"layout": {
+			"contentSize": "40rem"
+		},
+		"custom": {
+			"card": {
+				"radius": "0",
+				"shadow": "none",
+				"borderColor": "var(--wp--preset--color--accent)"
+			},
+			"control": {
+				"radius": "var(--wp--custom--radius--full)"
+			},
+			"section": {
+				"base": "clamp(3rem, 2rem + 4vw, 6rem)"
+			}
+		}
+	},
+	"styles": {
+		"elements": {
+			"heading": {
+				"typography": {
+					"fontWeight": "var(--wp--custom--font--weight--bold)",
+					"letterSpacing": "0"
+				}
+			}
+		}
+	}
+}

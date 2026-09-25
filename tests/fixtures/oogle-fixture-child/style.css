@@ -1,0 +1,16 @@
+/*
+Theme Name: Oogle Fixture Child
+Description: Compatibility fixture for Oogle Theme's automated tests. Not a production theme and never shipped: it proves that a child built on the documented contract keeps working. See docs/CHILD-THEMES.md.
+Template: oogle-theme
+Version: 1.0.0
+Requires at least: 7.0
+Tested up to: 7.1
+Requires PHP: 8.4
+License: GNU General Public License v2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: oogle-fixture-child
+Update URI: false
+*/
+
+/* Intentionally empty: block themes do not load style.css. The child's CSS is
+   assets/css/fixture.css, enqueued from functions.php. */

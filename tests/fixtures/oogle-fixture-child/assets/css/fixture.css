@@ -1,0 +1,11 @@
+/* Oogle Fixture Child — the whole of its site CSS. Tokens only; no !important,
+   no selector heavier than the parent's. */
+
+.oogle-fixture-marker {
+	border-block-start: 4px solid var(--wp--preset--color--accent);
+}
+
+.is-style-fixture-panel {
+	padding: var(--wp--custom--card--padding);
+	background: var(--wp--preset--color--accent-tint);
+}

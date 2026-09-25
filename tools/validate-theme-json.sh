@@ -12,7 +12,7 @@ for version in "$@"; do
 	schema="$(mktemp -t theme-json-schema-XXXXXX).json"
 	curl -sSfL "https://schemas.wp.org/wp/${version}/theme.json" -o "$schema"
 	jq -e '.definitions' "$schema" >/dev/null || { echo "schema for WordPress $version did not download"; exit 1; }
-	for file in theme.json styles/*.json; do
+	for file in theme.json styles/*.json tests/fixtures/*/theme.json tests/fixtures/*/styles/*.json; do
 		if npx -y ajv-cli@5 validate -s "$schema" -d "$file" --spec=draft7 --strict=false --all-errors >/tmp/ajv.out 2>&1; then
 			echo "ok  WordPress $version  $file"
 		else

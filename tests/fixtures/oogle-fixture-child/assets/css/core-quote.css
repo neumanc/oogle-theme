@@ -1,0 +1,5 @@
+/* core/quote — the child's own per-block stylesheet (loaded only when a Quote renders). */
+
+.wp-block-quote.is-style-testimonial > cite {
+	font-family: var(--wp--preset--font-family--heading);
+}
