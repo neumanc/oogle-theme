@@ -314,6 +314,16 @@
 			"border": {
 				"width": "1px"
 			},
+			"card": {
+				"background": "var(--wp--preset--color--base)",
+				"borderColor": "var(--wp--preset--color--line)",
+				"radius": "var(--wp--custom--radius--md)",
+				"shadow": "var(--wp--preset--shadow--sm)",
+				"padding": "var(--wp--preset--spacing--50)"
+			},
+			"control": {
+				"radius": "var(--wp--custom--radius--sm)"
+			},
 			"measure": {
 				"prose": "68ch"
 			},
@@ -456,7 +466,7 @@
 					"text": "var(--wp--preset--color--base)"
 				},
 				"border": {
-					"radius": "var(--wp--custom--radius--sm)",
+					"radius": "var(--wp--custom--control--radius)",
 					"width": "0"
 				},
 				"typography": {
@@ -742,7 +752,7 @@
 				}
 			},
 			"core/search": {
-				"css": "& .wp-block-search__input { border: 1px solid var(--wp--preset--color--muted); border-radius: var(--wp--custom--radius--sm); padding: 0.6em 0.8em; } & .wp-block-search__button { min-height: var(--wp--custom--target--min); }"
+				"css": "& .wp-block-search__input { border: 1px solid var(--wp--preset--color--muted); border-radius: var(--wp--custom--control--radius); padding: 0.6em 0.8em; } & .wp-block-search__button { min-height: var(--wp--custom--target--min); }"
 			}
 		}
 	},

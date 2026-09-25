@@ -29,7 +29,7 @@
 	--gf-color-in-error-contrast: var(--wp--preset--color--base) !important;
 	--gf-font-size-primary: var(--wp--preset--font-size--medium) !important;
 	--gf-font-size-secondary: var(--wp--preset--font-size--small) !important;
-	--gf-radius: var(--wp--custom--radius--sm) !important;
+	--gf-radius: var(--wp--custom--control--radius) !important;
 	--gf-ctrl-border-color: var(--wp--preset--color--muted) !important;
 	--gf-ctrl-border-color-focus: var(--wp--preset--color--primary-deep) !important;
 	--gf-ctrl-label-color-primary: var(--wp--preset--color--contrast) !important;
@@ -38,7 +38,7 @@
 	--gf-ctrl-btn-bg-color-primary: var(--wp--preset--color--accent) !important;
 	--gf-ctrl-btn-bg-color-hover-primary: var(--wp--preset--color--accent-deep) !important;
 	--gf-ctrl-btn-color-primary: var(--wp--preset--color--base) !important;
-	--gf-ctrl-btn-radius: var(--wp--custom--radius--sm) !important;
+	--gf-ctrl-btn-radius: var(--wp--custom--control--radius) !important;
 	--gf-ctrl-btn-font-weight: var(--wp--custom--font--weight--semibold) !important;
 	--gf-ctrl-btn-size: var(--wp--custom--target--min) !important;
 	--gf-ctrl-size: var(--wp--custom--target--min) !important;
@@ -79,7 +79,7 @@
 	inline-size: 100%;
 	border: 1px solid var(--wp--preset--color--line);
 	background: var(--wp--preset--color--base);
-	border-radius: var(--wp--custom--radius--sm);
+	border-radius: var(--wp--custom--control--radius);
 	padding: 0.8em 0.9em;
 	font: inherit;
 	color: var(--wp--preset--color--contrast);
@@ -117,7 +117,7 @@
 	min-block-size: var(--wp--custom--target--min);
 	padding: 0.9em 1.4em;
 	border: 0;
-	border-radius: var(--wp--custom--radius--sm);
+	border-radius: var(--wp--custom--control--radius);
 	background: var(--wp--preset--color--accent);
 	color: var(--wp--preset--color--base);
 	font: inherit;

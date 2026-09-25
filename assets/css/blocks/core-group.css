@@ -1,16 +1,19 @@
 /* core/group — block styles: card, card-flush; container-query for cards */
 
+/* The card's look comes from the settings.custom.card tokens (theme.json), so a
+   child theme restyles every card by changing values, not by out-specifying
+   this rule (docs/TOKENS.md). */
 .is-style-card,
 .is-style-card-flush {
-	background: var(--wp--preset--color--base);
-	border: var(--wp--custom--border--width) solid var(--wp--preset--color--line);
-	border-radius: var(--wp--custom--radius--md);
-	box-shadow: var(--wp--preset--shadow--sm);
+	background: var(--wp--custom--card--background);
+	border: var(--wp--custom--border--width) solid var(--wp--custom--card--border-color);
+	border-radius: var(--wp--custom--card--radius);
+	box-shadow: var(--wp--custom--card--shadow);
 	overflow: clip;
 }
 
 .is-style-card {
-	padding: var(--wp--preset--spacing--50);
+	padding: var(--wp--custom--card--padding);
 }
 
 /* Flush cards: the first image bleeds to the card edges; inner group pads itself. */
