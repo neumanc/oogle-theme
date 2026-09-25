@@ -18,7 +18,7 @@
    also holds for content that carries a "has-base-color" preset class: core
    pins that colour with !important, and an inverted (base) fill would then put
    base text on a base background (found in 1.0.1). */
-:where(.is-style-section-reversed, .is-style-section-primary, .wp-block-cover) .wp-block-button.is-style-outline > .wp-block-button__link {
+:where(.is-style-section-reversed, .is-style-section-primary, .wp-block-cover, .oogle-dark) .wp-block-button.is-style-outline > .wp-block-button__link {
 	color: var(--wp--preset--color--base);
 }
 
@@ -41,6 +41,6 @@
 	transform: translateX(0.2em);
 }
 
-:where(.is-style-section-reversed, .is-style-section-primary) .wp-block-button.is-style-text > .wp-block-button__link {
+:where(.is-style-section-reversed, .is-style-section-primary, .oogle-dark) .wp-block-button.is-style-text > .wp-block-button__link {
 	color: var(--wp--preset--color--base);
 }

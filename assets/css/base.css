@@ -60,7 +60,11 @@ main {
 	border-radius: var(--wp--custom--radius--sm);
 }
 
-:where(.is-style-section-reversed, .is-style-section-primary, .wp-block-cover) :where(a, button):focus-visible {
+/* Dark surfaces: the parent's two dark section styles, the Cover block, and any
+   element a child marks with "oogle-dark" (e.g. a dark header or footer Group).
+   The same list recolours outline/text buttons, lead and eyebrow copy in
+   blocks/core-button.css and blocks/core-paragraph.css. */
+:where(.is-style-section-reversed, .is-style-section-primary, .wp-block-cover, .oogle-dark) :where(a, button):focus-visible {
 	outline-color: var(--wp--preset--color--base);
 }
 
