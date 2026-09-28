@@ -5,11 +5,30 @@ Versioning: see docs/RELEASES.md.
 
 ## [Unreleased]
 
-Child-theme platform readiness. Additions only, so the next release is a **minor**
-(proposed 1.1.0). No breaking change: every slug, block style, pattern, part, template,
-class and filter of 1.0.x is kept. Full-page screenshots (home, a pattern page, search;
-1280 and 375 px) are byte-identical before and after, both for the parent alone and with
-the first client child active.
+## [1.1.0] — 2026-09-28
+
+The first child-theme-ready release: Oogle Theme is now formally a parent theme that
+client sites extend with a small child theme, and is updated from GitHub underneath it.
+Additions only, so this is a **minor** release. Every slug, block style, pattern, part,
+template, class and filter of 1.0.x is kept, and existing child themes work unchanged.
+Full-page screenshots (home, a pattern page, search; 1280 and 375 px) are byte-identical
+before and after, both for the parent alone and with a client child active.
+
+In short:
+- **Formal child-theme support** — a documented public contract (`docs/EXTENSION-API.md`)
+  that child themes may rely on for the whole of 1.x, with everything else marked internal.
+- **Design tokens** — `settings.custom.card.*` and `settings.custom.control.radius`.
+- **Child customisation** — the `oogle-dark` class; parent template patterns can be
+  overridden by slug; asset filters now say exactly what a child can do with them.
+- **Updater hardening** — the theme stays the only authority on its own update offer;
+  maintenance mode is left to core during bulk updates. Also includes the 1.0.1 hardening
+  (the [1.0.1] section of CHANGELOG.md), which was never released on its own.
+- **Contract testing** — a fixture child theme and a release gate that refuses a release
+  breaking it.
+- **Documentation** — platform boundaries, child-theme guide, versioning policy and
+  upgrade procedure.
+
+Sites on 1.0.0 update straight to 1.1.0 and receive the 1.0.1 fixes with it.
 
 ### Added
 - `settings.custom.card.{background,borderColor,radius,shadow,padding}` and
@@ -51,6 +70,8 @@ the first client child active.
   templates.
 
 ## [1.0.1] — 2026-09-18
+
+Not released on its own (never tagged); shipped as part of 1.1.0.
 
 Production hardening from an independent audit of 1.0.0. No breaking change: every slug,
 block style, pattern, part, template, class and filter from 1.0.0 is kept. Tested on

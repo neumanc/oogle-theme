@@ -149,11 +149,11 @@ template or part by shipping a file with the same name; WordPress resolves child
 | `oogle/updates/allowed_major` | `int\|null $major, string $installed` → `int\|null` | Opt in to another major once the child has been migrated. Site mu-plugin. |
 | `oogle/updates/request_args` | `array $args, string $url` → array | Proxy/timeout settings for update checks (cannot re-enable redirects or re-target the token). |
 
-Lab and test hooks with stable names, **not for production**: `oogle/updates/api_url`,
-`oogle/updates/style_url` (point the updater at a fixture).
-
 ## Internal — do not depend on
 
+- The test hooks `oogle/updates/api_url` and `oogle/updates/style_url` (they point the
+  updater at a fixture in the repository's own suites). Not a contract; never use them in
+  a child or on a production site.
 - Every PHP function (`oogle_*`). Change behaviour through the filters above; do not call
   or `remove_action()` parent functions.
 - `OOGLE_DIR`, `OOGLE_URI` (use `get_template_directory()` / `get_template_directory_uri()`).

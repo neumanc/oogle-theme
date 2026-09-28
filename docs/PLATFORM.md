@@ -104,7 +104,7 @@ Three different things currently answer to "Core". Keep them apart:
 2. **Oogle Manager** (`github.com/neumanc/oogle-manager`, formerly the `oogle-core`
    repository): an admin control plane that installs and updates Oogle products from GitHub
    Releases. It is not a functionality layer and has no presentation. It also answers
-   `update_themes_github.com`; from theme 1.1.0 (unreleased) the theme keeps the final say on its own
+   `update_themes_github.com`; from theme 1.1.0 the theme keeps the final say on its own
    offer (UPGRADE.md), so Manager can no longer offer a release the theme declined.
 3. **A reusable Oogle Core functionality plugin does not exist yet.** Nothing today
    depends on one: neither codebase above uses any Oogle Theme function, constant, class

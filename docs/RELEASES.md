@@ -89,6 +89,12 @@ and consistent, otherwise the release is not offered. Results are cached in a si
 transient for six hours (one hour after a failure); Dashboard → Updates → *Check again*
 clears it. Procedure and the tested upgrade: [../UPGRADE.md](../UPGRADE.md).
 
+**Sites still on 1.0.0** run the 1.0.0 updater, which reads only GitHub's *Latest* release
+and has no major-version policy. So the newest 1.x release must stay marked *Latest* until
+every site has left 1.0.0 (the release workflow marks each new release Latest); publishing
+a 2.0.0 as Latest would offer it to those sites. 1.0.1 was never published on its own;
+1.0.0 sites move straight to 1.1.0, which contains it.
+
 Production and client installations come from **GitHub Releases → the version → the
 `oogle-theme.zip` asset** (or through the updater, which uses exactly that asset). Never
 install from GitHub's *Code → Download ZIP*, a workspace zip, or any other source archive:
