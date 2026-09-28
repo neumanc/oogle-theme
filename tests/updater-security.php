@@ -455,12 +455,17 @@ t( 'no validated release cached (and repo 500) → refused', $is_err( $got, 'oog
 
 echo "\n== Package validation (oogle_update_validate_package) ==\n";
 $installed_theme = wp_get_theme( get_template() );
-$fixture = function ( array $over = array(), array $files = array() ) use ( $installed_theme ) {
+// The fixture package is always one patch newer than the installed theme, so the
+// cases below fail for their own reason, never as a downgrade, at any theme version.
+$pkg_parts   = array_map( 'intval', explode( '.', (string) $installed_theme->get( 'Version' ) ) ) + array( 0, 0, 0 );
+$pkg_version = $pkg_parts[0] . '.' . $pkg_parts[1] . '.' . ( $pkg_parts[2] + 1 );
+$pkg_wrong   = $pkg_parts[0] . '.' . $pkg_parts[1] . '.' . ( $pkg_parts[2] + 2 );
+$fixture = function ( array $over = array(), array $files = array() ) use ( $installed_theme, $pkg_version ) {
 	$dir = trailingslashit( get_temp_dir() ) . 'oogle-pkg-' . wp_generate_password( 8, false ) . '/';
 	wp_mkdir_p( $dir . 'templates' );
 	$h = array_merge( array(
 		'Theme Name'        => $installed_theme->get( 'Name' ),
-		'Version'           => '1.0.1',
+		'Version'           => $pkg_version,
 		'Requires at least' => '7.0',
 		'Requires PHP'      => '8.4',
 		'Update URI'        => $installed_theme->get( 'UpdateURI' ),
@@ -490,13 +495,14 @@ $rm = function ( string $dir ) {
 	foreach ( array( 'style.css', 'theme.json', 'templates/index.html' ) as $f ) { @unlink( $dir . $f ); }
 	@rmdir( $dir . 'templates' ); @rmdir( $dir );
 };
-$check = function ( array $over = array(), array $files = array(), string $expected = '1.0.1' ) use ( $fixture, $rm ) {
+$check = function ( array $over = array(), array $files = array(), ?string $expected = null ) use ( $fixture, $rm, $pkg_version ) {
+	$expected ??= $pkg_version;
 	$dir = $fixture( $over, $files );
 	$res = oogle_update_validate_package( $dir, $expected );
 	$rm( $dir );
 	return $res;
 };
-t( 'valid 1.0.1 package → accepted', true === $check() );
+t( "valid $pkg_version package → accepted", true === $check() );
 t( 'expected version unknown (empty transient) → rejected', $is_err( $check( array(), array(), '' ), 'oogle_update_package_no_expected' ) );
 t( 'style.css missing → rejected', $is_err( $check( array(), array( 'style.css' => null ) ), 'oogle_update_package_no_style' ) );
 t( 'other theme (Theme Name differs) → rejected', $is_err( $check( array( 'Theme Name' => 'Twenty Twenty-Five' ) ), 'oogle_update_package_identity' ) );
@@ -504,7 +510,7 @@ t( 'empty Theme Name → rejected', $is_err( $check( array( 'Theme Name' => '' )
 t( 'child theme package (Template header) → rejected', $is_err( $check( array( 'Template' => 'oogle-theme' ) ), 'oogle_update_package_child' ) );
 t( 'Update URI pointing elsewhere → rejected', $is_err( $check( array( 'Update URI' => 'https://github.com/attacker/oogle-theme' ) ), 'oogle_update_package_uri' ) );
 t( 'Update URI missing → rejected', $is_err( $check( array( 'Update URI' => null ) ), 'oogle_update_package_uri' ) );
-t( 'wrong version (1.0.2 when installing 1.0.1) → rejected', $is_err( $check( array( 'Version' => '1.0.2' ) ), 'oogle_update_package_version' ) );
+t( "wrong version ($pkg_wrong when installing $pkg_version) → rejected", $is_err( $check( array( 'Version' => $pkg_wrong ) ), 'oogle_update_package_version' ) );
 t( 'downgrade (0.9.0 when installing 0.9.0) → rejected', $is_err( $check( array( 'Version' => '0.9.0' ), array(), '0.9.0' ), 'oogle_update_package_downgrade' ) );
 t( 'Requires PHP missing → rejected', $is_err( $check( array( 'Requires PHP' => null ) ), 'oogle_update_package_requirements' ) );
 t( 'Requires at least missing → rejected', $is_err( $check( array( 'Requires at least' => null ) ), 'oogle_update_package_requirements' ) );
