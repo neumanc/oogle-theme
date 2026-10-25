@@ -167,6 +167,57 @@ if ( $child ) {
 }
 t( 'the installed parent is a valid package at its own version', true === oogle_update_validate_package( $parent, OOGLE_VERSION ) );
 
+echo "\n== Status API (oogle_status, oogle/status, oogle_core_modules) ==\n";
+$requests = 0;
+$count    = static function ( $pre ) use ( &$requests ) {
+	++$requests;
+	return $pre;
+};
+add_filter( 'pre_http_request', $count );
+$status = oogle_status();
+t( 'oogle_status() reports the parent version and the active stylesheet', OOGLE_VERSION === $status['version'] && 'oogle-theme' === $status['template'] && get_stylesheet() === $status['stylesheet'] );
+t( 'oogle_status() reports the child', $child ? ( true === $status['is_child'] && 'false' === $status['child']['update_uri'] ) : ( false === $status['is_child'] && null === $status['child'] ) );
+t( 'oogle_status() reports the updater configuration without the token', 'neumanc/oogle-theme' === $status['repository'] && is_bool( $status['token_defined'] ) && ! str_contains( (string) wp_json_encode( $status ), 'ghp_' ) && array() !== $status['signing_key_ids'] );
+t( 'no reserved child stylesheet paths in the fixture', array() === $status['reserved_child_files'] );
+set_site_transient( $cache_key, array( 'error' => 'GitHub returned HTTP 503.' ), HOUR_IN_SECONDS );
+$status = oogle_status();
+t( 'a cached failed check is reported, not retried', null === $status['cached_release'] && 'GitHub returned HTTP 503.' === $status['last_error'] );
+t( 'and becomes a "recommended" health check', in_array( 'update-check', array_column( oogle_status_health(), 'id' ), true ) );
+delete_site_transient( $cache_key );
+$status = oogle_status();
+t( 'nothing cached: no release, no error, and still no request', null === $status['cached_release'] && '' === $status['last_error'] );
+$extend = static fn( array $s ): array => $s + array( 'site_note' => 'x' );
+add_filter( 'oogle/status', $extend );
+t( 'the oogle/status filter can extend the report', 'x' === ( oogle_status()['site_note'] ?? '' ) );
+remove_filter( 'oogle/status', $extend );
+$modules = apply_filters( 'oogle_core_modules', array() );
+$module  = $modules['oogle-theme'] ?? array();
+t( 'the theme describes itself to Oogle Core (contract 1, theme section)', 1 === ( $module['contract'] ?? 0 ) && 'theme' === ( $module['section'] ?? '' ) && 'theme' === ( $module['type'] ?? '' ) && OOGLE_VERSION === ( $module['version'] ?? '' ) && 'oogle-theme' === ( $module['basename'] ?? '' ) );
+t( 'it declares no admin screens of its own', ! isset( $module['screens'] ) );
+$rows   = is_callable( $module['status'] ?? null ) ? call_user_func( $module['status'] ) : null;
+$checks = is_callable( $module['health'] ?? null ) ? call_user_func( $module['health'] ) : null;
+t( 'its status rows are label/value pairs of plain text', is_array( $rows ) && array() !== $rows && array() === array_filter( $rows, static fn( $r ) => ! is_string( $r['label'] ?? null ) || ! is_string( $r['value'] ?? null ) || wp_strip_all_tags( $r['value'] ) !== $r['value'] ) );
+t( 'its health checks use Site Health statuses', is_array( $checks ) && array() !== $checks && array() === array_diff( array_column( $checks, 'status' ), array( 'good', 'recommended', 'critical' ) ) );
+remove_filter( 'pre_http_request', $count );
+t( 'the status API made no HTTP request', 0 === $requests, (string) $requests );
+
+echo "\n== \"Check again\" forgets the cached release (D1) ==\n";
+set_site_transient( $cache_key, array( 'error' => 'marker' ), HOUR_IN_SECONDS );
+$admin = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
+wp_set_current_user( (int) ( $admin[0] ?? 0 ) );
+t( 'the flush is hooked before core\'s wp_update_themes on load-update-core.php', 9 === has_action( 'load-update-core.php', 'oogle_update_flush_on_force_check' ) );
+oogle_update_flush_on_force_check();
+t( 'without force-check the cache is kept', is_array( get_site_transient( $cache_key ) ) );
+$_GET['force-check'] = '1';
+wp_set_current_user( 0 );
+oogle_update_flush_on_force_check();
+t( 'a visitor without update_themes cannot flush it', is_array( get_site_transient( $cache_key ) ) );
+wp_set_current_user( (int) ( $admin[0] ?? 0 ) );
+oogle_update_flush_on_force_check();
+unset( $_GET['force-check'] );
+wp_set_current_user( 0 );
+t( 'an administrator\'s "Check again" deletes it', false === get_site_transient( $cache_key ) );
+
 $pass = $GLOBALS['oogle_t']['pass'];
 $fail = $GLOBALS['oogle_t']['fail'];
 echo "\nRESULT (" . ( $child ? 'child' : 'parent only' ) . "): $pass passed, $fail failed\n";

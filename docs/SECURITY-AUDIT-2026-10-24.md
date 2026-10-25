@@ -196,6 +196,7 @@ Each entry: component, root cause, prerequisites, realistic risk, fix, tests.
   published asset only if every file is identical (`diff -r`), printing both digests; any
   content difference still refuses. RELEASES.md corrected.
 
+### 2.10 Informational — repository settings (not changed by the audit)
 
 Observed via the GitHub API: `main` is not protected, no rulesets, Actions `allowed_actions:
 all`, `sha_pinning_required: false`, Dependabot security updates disabled (secret scanning and

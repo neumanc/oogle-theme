@@ -5,7 +5,31 @@ Versioning: see docs/RELEASES.md.
 
 ## [Unreleased]
 
+Planned as **1.3.0** (minor: one public function and one filter added; nothing removed).
+
+### Added
+- `oogle_status()`: a read-only, cache-only status report (version, child, updater
+  configuration, cached release or last error, signing key ids, reserved child files), and
+  the `oogle/status` filter. It never makes a network request. It is documented in
+  docs/EXTENSION-API.md and asserted in both child-suite modes.
+- Passive registration on `oogle_core_modules` (Oogle Manager's module contract 1), so the
+  Oogle → Theme screen shows the theme's status rows and health checks. The theme still detects
+  nothing and needs nothing. The new module is `inc/status.php`.
+
 ### Fixed
+- Dashboard → Updates → *Check again* now really forgets the cached release. Core's
+  `force-check` only re-ran its own version check, so a new or newly signed release stayed
+  invisible for up to six hours. The fix is a `load-update-core.php` hook (priority 9, before
+  `wp_update_themes()`, `update_themes` capability). The docblock that claimed this already
+  happened is corrected.
+- Docs: the update gates run only while the theme is in use (active or parent of the active
+  child). An unused installed copy gets only the SHA-256 check of whatever updates it. This is
+  now stated in README, UPGRADE and SECURITY instead of "every path". README's version line, the
+  build example and its references to "Oogle Core" (now Oogle Manager) are updated.
+  "Byte-identical" is corrected to "identical in content" where it describes signing.
+- Removed nine macOS Finder duplicates (`* 2.*`) committed in f763025. Two of them were stale
+  (the audit report before §2.9a and the old `sign-release.sh`). Restored the
+  `### 2.10 Informational — repository settings` heading lost from the audit report.
 - `tools/sign-release.sh`: `git archive` is content-deterministic but not byte-deterministic
   across git/zlib builds, so the byte comparison with the published asset refused the first
   signing run. The script now signs the published asset when every extracted file is identical

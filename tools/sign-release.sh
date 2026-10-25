@@ -8,8 +8,8 @@
 #
 #   tools/sign-release.sh vX.Y.Z [--upload] [--key PATH]
 #       Reproduces oogle-theme.zip from the tag with the exact git archive
-#       command the Release workflow uses, proves it is byte-identical to the
-#       asset the workflow published (its .sha256), signs it and verifies the
+#       command the Release workflow uses, proves its content is identical to
+#       the asset the workflow published (checked against its .sha256), signs it and verifies the
 #       signature with the committed public key. --upload attaches
 #       oogle-theme.zip.sig to the Release (gh release upload --clobber).
 #   tools/sign-release.sh path/to/oogle-theme.zip [--key PATH]

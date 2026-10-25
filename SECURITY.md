@@ -26,7 +26,11 @@ rate limit and is sent to `api.github.com` alone — never to another host, a fi
 or a redirect target.
 
 Before the installed parent is replaced, three gates run on every upgrader path, including
-the ones where core's own `check_package()` does not run:
+the ones where core's own `check_package()` does not run, as long as the theme is in use
+(the active theme or the parent of the active child). They are this theme's code: a copy that
+is installed but not in use is not loaded, so updating it (Appearance → Themes, Oogle Manager)
+gets only what that tool checks — Manager verifies the release's SHA-256, not the Ed25519
+signature. Do not keep stale unused copies on production sites.
 
 1. **Integrity** (`upgrader_pre_download`): the release must publish a `.sha256` sidecar and
    the downloaded package must match it.

@@ -133,6 +133,8 @@ template or part by shipping a file with the same name; WordPress resolves child
 | Constant `OOGLE_VERSION` | Parent version (read-only). Defined when the **parent's** `functions.php` loads, which is *after* the child's — read it inside a hook (`after_setup_theme` or later). |
 | Constant `OOGLE_GITHUB_TOKEN` | Optional, set in `wp-config.php` by the site (raises the GitHub API rate limit). |
 | Text domain `oogle` | Parent strings. |
+| Function `oogle_status(): array` | Since 1.3.0. Read-only report from local state: `version`, `template`, `stylesheet`, `is_child`, `child` (`name`, `version`, `update_uri`), `updates_enabled`, `repository`, `allowed_major`, `cached_release` (`version`, `url`, `requires`, `requires_php`) or `null`, `last_error`, `signing_key_ids`, `sodium_available`, `token_defined` (boolean; the token itself is never exposed), `reserved_child_files`. Never makes a network request. Defined only while the theme is loaded: check `function_exists( 'oogle_status' )`. Keys may be added in minor releases, never removed within a major. |
+| Filter registration on `oogle_core_modules` | Since 1.3.0. The parent describes itself to the Oogle admin (Oogle Manager's module contract 1; id `oogle-theme`, section `theme`, no screens). Passive: nothing runs unless that plugin applies the filter. |
 
 ### Filters
 
@@ -147,6 +149,7 @@ template or part by shipping a file with the same name; WordPress resolves child
 | `oogle/cleanup/emoji` | `bool` (default true) → bool | Keep core's emoji loader. |
 | `oogle/updates/enabled` | `bool` → bool | Switch the GitHub updater off (git-deployed sites). Site mu-plugin, not the child. |
 | `oogle/updates/allowed_major` | `int\|null $major, string $installed` → `int\|null` | Opt in to another major once the child has been migrated. Site mu-plugin. |
+| `oogle/status` | `array $status` → array | Since 1.3.0. Add site rows to `oogle_status()`; do not remove the documented keys. |
 | `oogle/updates/request_args` | `array $args, string $url` → array | Proxy/timeout settings for update checks (cannot re-enable redirects or re-target the token). |
 
 ## Internal — do not depend on

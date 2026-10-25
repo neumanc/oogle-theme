@@ -11,7 +11,7 @@ name: Release
 # signing key lives with the maintainer, never in CI, so a compromised token,
 # account or workflow cannot sign. After this workflow has published, run
 #   tools/sign-release.sh vX.Y.Z --upload
-# which reproduces the archive from the tag, proves it is byte-identical to the
+# which reproduces the archive from the tag, proves its content is identical to the
 # published asset, signs it and attaches the .sig. inc/updates.php (1.2.0+)
 # offers a release only once all three assets are present.
 

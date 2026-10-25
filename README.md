@@ -7,7 +7,7 @@ optional script modules. Every client site is a **child theme** that supplies it
 values, fonts, header/footer content and site patterns; site functionality lives in a site
 plugin. No page builder, no build step, no jQuery, no CSS or JS framework.
 
-- **Version:** 1.0.0 — see [CHANGELOG.md](CHANGELOG.md)
+- **Version:** 1.2.0 — see [CHANGELOG.md](CHANGELOG.md)
 - **Requires:** WordPress 7.0+ (tested on 7.0 and 7.1), PHP 8.4+ (tested on 8.4; see CHANGELOG for 8.5)
 - **License:** [GPL-2.0-or-later](LICENSE)
 - **Production dependencies:** none. WordPress core only.
@@ -43,7 +43,7 @@ oogle-theme/
 ## Installation
 
 1. Download `oogle-theme.zip` from the latest [GitHub Release](https://github.com/neumanc/oogle-theme/releases)
-   (or build it: `git archive --format=zip --prefix=oogle-theme/ v1.0.0 -o oogle-theme.zip`).
+   (or build it: `git archive --format=zip --prefix=oogle-theme/ v1.2.0 -o oogle-theme.zip`).
 2. Appearance → Themes → Add New → Upload, or unzip into `wp-content/themes/oogle-theme/`.
    The directory **must** be named `oogle-theme`; child themes reference it by that name.
 3. Do not activate the parent on a client site. Create and activate a child theme
@@ -70,11 +70,19 @@ requirements — on every upgrader path, including automatic updates. Trust mode
 directory, so an update cannot overwrite client work. Procedure, guarantees and the
 tested upgrade: [UPGRADE.md](UPGRADE.md). Release mechanics: [docs/RELEASES.md](docs/RELEASES.md).
 
-The theme is one of three independent Oogle products. [Oogle Core](https://github.com/neumanc/oogle-core)
-(a plugin) can install and update the theme from the same GitHub Releases and shows its
-installed/active state on its dashboard, but the theme never requires Core: it detects
-nothing about Core, updates itself without it, and behaves identically whether Core is
-present, inactive or absent. Core reads the theme only through WordPress's theme APIs.
+The theme is one of several independent Oogle products. [Oogle Manager](https://github.com/neumanc/oogle-manager)
+(a plugin, which also provides the shared **Oogle** admin menu, "Oogle Core") can install and
+update the theme from the same GitHub Releases and shows it under Oogle → Theme. The theme
+never requires Manager: it detects nothing about it, updates itself without it, and behaves
+identically whether Manager is present, inactive or absent. Manager reads the theme through
+WordPress's theme APIs and, while the theme is loaded, through the read-only `oogle_status()`
+function and the passive `oogle_core_modules` registration (docs/EXTENSION-API.md).
+
+The update gates described above are code in this theme, so they run only while the theme is
+loaded: as the active theme or as the parent of the active child. An Oogle Theme that is
+installed but **not in use** is updated by WordPress or Manager without the theme's own
+signature and package checks (Manager still verifies the release's SHA-256). Keep inactive
+copies current or delete them.
 
 ## Customization strategy
 
@@ -119,7 +127,7 @@ Security reports: [SECURITY.md](SECURITY.md).
    excluded by `.gitattributes export-ignore`), attests its build provenance and publishes a
    GitHub Release with the zip and its SHA-256.
 4. `tools/sign-release.sh vX.Y.Z --upload` reproduces the archive from the tag, checks it is
-   byte-identical to the published asset, signs it with the maintainer's key and attaches
+   identical in content to the published asset, signs it with the maintainer's key and attaches
    `oogle-theme.zip.sig`. The updater then picks the release up on every site within six hours
    (or immediately via Dashboard → Updates → Check again).
 
@@ -142,7 +150,7 @@ limitations and the QA checklist: [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md)
 
 ## Performance
 
-Measured on the clean install (1.0.0): the parent adds one stylesheet (`base.css`, 5.5 KB,
+Measured on the clean install of 1.0.0 (unchanged in substance since): the parent adds one stylesheet (`base.css`, 5.5 KB,
 ~2 KB gzip), per-block CSS inlined only for blocks on the page (all block files together
 21 KB, ~7 KB gzip), and **no JavaScript** unless a block opts into `reveal` (1.9 KB) or
 `rotator` (3.0 KB). No external fonts, no icon font, no third-party requests. Numbers and

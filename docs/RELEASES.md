@@ -76,8 +76,9 @@ section at release.
    Release marked *Latest* with both files and the CHANGELOG section as notes, using the
    runner's own `gh`. A gate failure means no Release.
 4. **Sign it.** `tools/sign-release.sh vX.Y.Z --upload` reproduces the archive from the tag
-   with the same `git archive` command, refuses to continue unless it is byte-identical to the
-   asset the workflow published, signs it with the maintainer's Ed25519 key and attaches
+   with the same `git archive` command, refuses to continue unless its extracted content is
+   identical to the asset the workflow published (bytes may differ across git builds, §2.9a of
+   the audit), signs it with the maintainer's Ed25519 key and attaches
    `oogle-theme.zip.sig` to the Release. Sites on 1.2.0 or later are offered the release only
    once this asset exists (older updaters ignore it). Check with `tools/verify-release.sh vX.Y.Z`.
 5. Reproduce locally at any time with the same `git archive` command. The archive's *content*
@@ -128,7 +129,8 @@ included). The new version's `Requires at least` /
 `Requires PHP` and `Version` are read from `style.css` at the tag and must all be present
 and consistent, otherwise the release is not offered. Results are cached in a site
 transient for six hours (one hour after a failure); Dashboard → Updates → *Check again*
-clears it. Procedure and the tested upgrade: [../UPGRADE.md](../UPGRADE.md).
+clears it (from 1.3.0; before that it only cleared when something deleted the
+`update_themes` transient). Procedure and the tested upgrade: [../UPGRADE.md](../UPGRADE.md).
 
 **Sites still on 1.0.0** run the 1.0.0 updater, which reads only GitHub's *Latest* release
 and has no major-version policy. So the newest 1.x release must stay marked *Latest* until

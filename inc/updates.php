@@ -967,9 +967,9 @@ function oogle_update_source_selection( $source, string $remote_source, WP_Upgra
 add_filter( 'upgrader_source_selection', 'oogle_update_source_selection', 10, 4 );
 
 /**
- * Forget the cached release when the site asks for a fresh check ("Check
- * again" on the Updates screen deletes the update_themes transient) and after
- * this theme has been updated.
+ * Forget the cached release whenever something deletes the update_themes
+ * transient (wp_clean_themes_cache(), a plugin asking WordPress to check
+ * again) and after this theme has been updated.
  *
  * @return void
  */
@@ -980,6 +980,22 @@ function oogle_update_flush_cache(): void {
 	}
 }
 add_action( 'delete_site_transient_update_themes', 'oogle_update_flush_cache' );
+
+/**
+ * "Check again" on Dashboard → Updates (update-core.php?force-check=1) only
+ * forces core's version check; it does not delete update_themes, so without
+ * this the cached release would be served for up to six hours. Runs before
+ * core's own wp_update_themes() on the same hook (priority 10).
+ *
+ * @return void
+ */
+function oogle_update_flush_on_force_check(): void {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- mirrors core's nonce-less "Check again" link; it only forgets a cache.
+	if ( ! empty( $_GET['force-check'] ) && current_user_can( 'update_themes' ) ) {
+		oogle_update_flush_cache();
+	}
+}
+add_action( 'load-update-core.php', 'oogle_update_flush_on_force_check', 9 );
 add_action(
 	'upgrader_process_complete',
 	static function ( WP_Upgrader $upgrader, array $hook_extra ): void {

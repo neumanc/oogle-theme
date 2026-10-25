@@ -38,7 +38,9 @@ then follows that major — or opt in from the site mu-plugin:
 `add_filter( 'oogle/updates/allowed_major', fn() => 2 );` (return `null` to follow any major).
 
 Three gates run before the installed parent is replaced, on every path (Appearance → Themes,
-Dashboard → Updates, automatic updates, WP-CLI, Oogle Core): the downloaded zip must match
+Dashboard → Updates, automatic updates, WP-CLI, Oogle Manager) **while the theme is in use**
+(active, or the parent of the active child; an installed but unused copy runs none of its own
+code, see SECURITY.md): the downloaded zip must match
 the SHA-256 published with the release; since 1.2.0 its Ed25519 signature (`oogle-theme.zip.sig`)
 must verify against the public key built into the theme, which proves the release was signed
 by the maintainer and not merely uploaded to GitHub; and the extracted package must be this
