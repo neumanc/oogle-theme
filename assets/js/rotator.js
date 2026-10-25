@@ -99,12 +99,27 @@ function start( el ) {
 	toggle.type = 'button';
 	toggle.className = TOGGLE;
 	toggle.setAttribute( 'aria-pressed', 'false' );
+	// Built with DOM calls, not innerHTML, so the module runs unchanged under a
+	// Content Security Policy that requires Trusted Types.
+	const icon = ( d ) => {
+		const ns = 'http://www.w3.org/2000/svg';
+		const svg = document.createElementNS( ns, 'svg' );
+		svg.setAttribute( 'viewBox', '0 0 24 24' );
+		svg.setAttribute( 'width', '20' );
+		svg.setAttribute( 'height', '20' );
+		svg.setAttribute( 'aria-hidden', 'true' );
+		svg.setAttribute( 'focusable', 'false' );
+		const path = document.createElementNS( ns, 'path' );
+		path.setAttribute( 'fill', 'currentColor' );
+		path.setAttribute( 'd', d );
+		svg.append( path );
+		return svg;
+	};
+	const icons = { play: icon( 'M8 5v14l11-7z' ), pause: icon( 'M6 5h4v14H6zm8 0h4v14h-4z' ) };
 	const setState = () => {
 		toggle.setAttribute( 'aria-pressed', paused ? 'true' : 'false' );
 		toggle.setAttribute( 'aria-label', paused ? labels.play : labels.pause );
-		toggle.innerHTML = paused
-			? '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>'
-			: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>';
+		toggle.replaceChildren( paused ? icons.play : icons.pause );
 		el.classList.toggle( 'is-paused', paused );
 	};
 	toggle.addEventListener( 'click', () => {

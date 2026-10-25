@@ -154,6 +154,9 @@ template or part by shipping a file with the same name; WordPress resolves child
 - The test hooks `oogle/updates/api_url` and `oogle/updates/style_url` (they point the
   updater at a fixture in the repository's own suites). Not a contract; never use them in
   a child or on a production site.
+- The updater's release-signing keys (`oogle_update_signing_keys()`), the token host list and
+  the `.sig` / `.sha256` asset formats. Deliberately not filterable; the release contract they
+  belong to is documented in RELEASES.md and SECURITY.md, not here.
 - Every PHP function (`oogle_*`). Change behaviour through the filters above; do not call
   or `remove_action()` parent functions.
 - `OOGLE_DIR`, `OOGLE_URI` (use `get_template_directory()` / `get_template_directory_uri()`).

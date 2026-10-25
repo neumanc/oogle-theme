@@ -5,6 +5,67 @@ Versioning: see docs/RELEASES.md.
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-10-24
+
+A security release from the full audit of 24 October 2026 (report: `docs/SECURITY-AUDIT-2026-10-24.md`).
+No Critical or High finding; the one architectural gap — the update checksum lived in the
+same GitHub Release as the archive, so it proved the transfer but not the publisher — is
+closed by **signed releases**. Additions only to the release contract, so this is a **minor**
+release: every slug, block style, pattern, part, template, class and filter of 1.1.0 is kept
+and existing child themes work unchanged. Sites on 1.0.0 and 1.1.0 update to 1.2.0 with their
+installed updater (it ignores the new asset); from 1.2.0 on, a release is installed only when
+its signature verifies.
+
+### Security
+- **Signed releases.** Every release now carries `oogle-theme.zip.sig`, an Ed25519 signature
+  over the archive, verified on `upgrader_pre_download` against a public key pinned in
+  `inc/updates.php` (`oogle_update_signing_keys()`, not filterable; `tools/release-signing.pub`
+  is the same key). A release without a verifying signature is not offered or, if cached, not
+  installed. The private key lives only with the maintainer; the Release workflow cannot sign,
+  so a compromised GitHub token, account, Actions run or dependency can no longer produce an
+  update sites would install. `tools/sign-release.sh` reproduces the tagged archive, proves it
+  byte-identical to the published asset, signs and uploads; `tools/verify-release.sh` checks a
+  release with OpenSSL. Trust model and rotation procedure: SECURITY.md, docs/RELEASES.md.
+- Updater transport: `oogle/updates/request_args` can no longer switch off TLS certificate
+  verification (`sslverify` is forced after the filter, like `redirection`); the releases
+  list is capped at 1 MB and `style.css` at 64 KB (`limit_response_size`), so a hostile or
+  broken host cannot make a site read an unbounded body.
+- Updater: every asset URL must belong to the release's own tag; an asset of another tag of
+  the same repository offered in a release's metadata is rejected.
+- Package gate: a package containing a symbolic link is rejected (core's unzip writes none,
+  so finding one means the package is not ours); a rejected package's extracted files are
+  removed from `wp-content/upgrade/` instead of being left there by core.
+- Rotator module: the pause/play icons are built with DOM calls instead of `innerHTML`
+  (static markup before, so no injection; this makes the module run under a Content Security
+  Policy that requires Trusted Types).
+- Release workflow: publishes with the runner's `gh` instead of a third-party action, attests
+  SLSA build provenance (`gh attestation verify oogle-theme.zip --owner neumanc`), marks each
+  release *Latest* explicitly, and no longer persists the checkout token; CI jobs that run
+  third-party tooling no longer persist it either. Dependabot watches the SHA-pinned actions.
+  `tools/check-archive.sh` refuses archives with symbolic links or traversal entries.
+
+### Added
+- `tests/e2e/run.sh` — the upgrade recipe of docs/RELEASES.md automated: a dedicated wp-env
+  lab installs the published release with the fixture child active and runs the real core
+  upgrader (bulk, single and `wp theme update`) against archives built from the commit:
+  success, tampered, unsigned, wrongly signed, broken and downgrade scenarios, asserting the
+  parent, child, content, settings, maintenance mode, `wp-content/upgrade/` and `debug.log`.
+  The release gate runs it on every push; the signed scenarios run with the maintainer's key.
+- Child-theme suites run on WordPress 7.0 as well as 7.1 in CI (both supported versions).
+- Updater suite: signature parsing and verification (real-key test vector, unknown key,
+  flipped bit, rotation set), tag binding of asset URLs, transport hardening, symlink and
+  working-directory cleanup cases (235 assertions, both token modes).
+
+### Fixed
+- `tests/e2e/run.sh` revealed that a package rejected on `upgrader_source_selection` left its
+  extracted files in `wp-content/upgrade/` (core behaviour); the gate now removes them.
+
+### Documented
+- SECURITY.md: the updater's trust model (what each gate proves, what is and is not covered,
+  key custody, rotation, loss), and how to verify a release by hand. docs/RELEASES.md: the
+  signing step, the `.sig` contract and the automated upgrade test. UPGRADE.md: three gates
+  and the manual-upload escape hatch. README, ARCHITECTURE, EXTENSION-API, AGENTS updated.
+
 ## [1.1.0] — 2026-09-28
 
 The first child-theme-ready release: Oogle Theme is now formally a parent theme that

@@ -24,7 +24,7 @@ What a child may depend on: [EXTENSION-API.md](EXTENSION-API.md).
 | `images.php` | JPEG → WebP sub-sizes (AVIF opt-in); hero Cover gets `fetchpriority="high"`, no lazy | `oogle/images/avif` |
 | `cleanup.php` | removes the emoji loader on the front end | `oogle/cleanup/emoji` |
 | `a11y.php` | render-time fixes for verified core defects (accordion panel `role="region"`) | — |
-| `updates.php` | answers core's `update_themes_github.com` check for the parent directory from GitHub Releases (installed major only; stays authoritative over other callbacks); verifies the `.sha256` on download and validates the extracted package; renames the extracted folder if needed; caches 6 h / 1 h on failure | `oogle/updates/enabled`, `oogle/updates/allowed_major`, `oogle/updates/request_args`; lab only: `oogle/updates/api_url`, `oogle/updates/style_url` |
+| `updates.php` | answers core's `update_themes_github.com` check for the parent directory from GitHub Releases (installed major only; stays authoritative over other callbacks); verifies the `.sha256` and the Ed25519 `.sig` (pinned public key) on download and validates the extracted package (identity, version, requirements, theme.json, no symlinks; a rejected package is removed from wp-content/upgrade); renames the extracted folder if needed; caches 6 h / 1 h on failure | `oogle/updates/enabled`, `oogle/updates/allowed_major`, `oogle/updates/request_args`; lab only: `oogle/updates/api_url`, `oogle/updates/style_url` |
 
 `functions.php` only requires these files. Total PHP ≈ 750 lines, a third of it comments.
 

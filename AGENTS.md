@@ -98,5 +98,6 @@ cascade layers (core is unlayered), no `!important` except the two documented us
 - [ ] Clean-install walk: home, page, post with comments, archive, search, 404, editor, Site Editor; `debug.log` empty
 - [ ] axe: 0 violations on the pages you touched; keyboard walk of any interactive change
 - [ ] Child-theme suites pass in both configurations (`tests/child-theme.php` with `oogle-theme` and with `oogle-fixture-child` active, `tests/child-theme-http.sh`); a new public API is added to docs/EXTENSION-API.md and exercised by the fixture
+- [ ] Updater suites pass (`tests/updater-security.php` with and without `with-token`, `tests/redirect-transport.php`); before a tag, `tests/e2e/run.sh` with the signing key present (the real core upgrader on every path, signed); after the Release workflow, `tools/sign-release.sh vX.Y.Z --upload`
 - [ ] No client name, URL, phone, colour or copy in the parent (the CI grep for client names must pass)
 - [ ] CHANGELOG entry under *Unreleased*

@@ -37,13 +37,18 @@ once (Appearance → Themes → Add New → Upload, "Replace current with upload
 then follows that major — or opt in from the site mu-plugin:
 `add_filter( 'oogle/updates/allowed_major', fn() => 2 );` (return `null` to follow any major).
 
-Two gates run before the installed parent is replaced, on every path (Appearance → Themes,
+Three gates run before the installed parent is replaced, on every path (Appearance → Themes,
 Dashboard → Updates, automatic updates, WP-CLI, Oogle Core): the downloaded zip must match
-the SHA-256 published with the release, and the extracted package must be this theme (name,
-no `Template` header, canonical `Update URI`) at exactly the version being installed, with
-declared requirements this host meets, a valid `theme.json` and `templates/index.html`. A
-package that fails either gate leaves the installed theme untouched; the message names the
-reason.
+the SHA-256 published with the release; since 1.2.0 its Ed25519 signature (`oogle-theme.zip.sig`)
+must verify against the public key built into the theme, which proves the release was signed
+by the maintainer and not merely uploaded to GitHub; and the extracted package must be this
+theme (name, no `Template` header, canonical `Update URI`) at exactly the version being
+installed, with declared requirements this host meets, a valid `theme.json`,
+`templates/index.html` and no symbolic links. A package that fails any gate leaves the
+installed theme untouched and is removed from `wp-content/upgrade/`; the message names the
+reason. The one path these gates do not cover is a manual upload (Appearance → Themes → Add
+New → Upload): that is the deliberate escape hatch for a release the site cannot verify, for
+example after a signing-key rotation it missed (SECURITY.md).
 
 ## With a child theme active
 
@@ -70,12 +75,15 @@ This is the normal production configuration, and it is what CI and the upgrade t
   `wp-content/upgrade-temp-backup/` first and restores it if the move fails), so the window
   is milliseconds; with an aggressive page cache, prefer updating through Dashboard →
   Updates or WP-CLI, then purge the cache.
-- **Tested** (lab, WordPress 7.1 / PHP 8.4, fixture child active, mocked GitHub serving a
-  real package): bulk and single paths both moved the parent to the new version with the
-  child's files, the active theme, theme mods and content unchanged and the installed files
-  byte-identical to the package; a tampered package was refused at the checksum gate (single
-  path) with everything left untouched and maintenance mode off; a competing update filter offering 2.0.0 did not change the
-  offer (1.1.0).
+- **Tested** (`tests/e2e/run.sh`, run before every release and in CI; WordPress 7.1 /
+  PHP 8.4, fixture child active, mocked GitHub serving real archives): the published release
+  moved to the new version on the bulk, single and `wp theme update` paths with the child's
+  files, the active theme, theme mods and content unchanged and the installed files
+  byte-identical to the package; a tampered package was refused at the checksum gate, an
+  unsigned one was never offered, one signed with an unknown key was refused at the
+  signature gate, one without `theme.json` at the package gate — each with everything left
+  untouched, maintenance mode off and no files left in `wp-content/upgrade/`; a downgrade
+  was never offered; a competing update filter did not change the offer.
 
 **If the parent directory is ever missing or broken** (a failed manual copy, a host
 restore): do not open Appearance → Themes or the Customizer first. Those two screens run

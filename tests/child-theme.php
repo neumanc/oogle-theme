@@ -148,6 +148,7 @@ set_site_transient(
 		'url'          => 'https://github.com/neumanc/oogle-theme/releases/tag/v1.99.0',
 		'package'      => 'https://github.com/neumanc/oogle-theme/releases/download/v1.99.0/oogle-theme.zip',
 		'checksum'     => 'https://github.com/neumanc/oogle-theme/releases/download/v1.99.0/oogle-theme.zip.sha256',
+		'signature'    => 'https://github.com/neumanc/oogle-theme/releases/download/v1.99.0/oogle-theme.zip.sig',
 		'requires'     => '7.0',
 		'requires_php' => '8.4',
 	),

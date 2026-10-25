@@ -22,6 +22,8 @@ jobs:
         php: ['8.4', '8.5']
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
         with:
@@ -56,6 +58,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
@@ -84,6 +88,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
@@ -112,14 +118,26 @@ jobs:
           npx -y @wordpress/env@11 run cli sh -c 'if [ -s wp-content/debug.log ]; then cat wp-content/debug.log; exit 1; fi; echo "debug.log empty"'
 
   child:
-    name: Child-theme compatibility (parent alone and fixture child) on WordPress 7.1 / PHP 8.4
+    name: Child-theme compatibility (parent alone and fixture child) on WordPress ${{ matrix.wp }} / PHP 8.4
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Both supported WordPress versions (docs/RELEASES.md compatibility policy).
+        wp: ['7.0', '7.1']
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 20
+
+      - name: Select WordPress ${{ matrix.wp }}
+        run: |
+          echo "{ \"core\": \"WordPress/WordPress#${{ matrix.wp }}-branch\" }" > .wp-env.override.json
+          cat .wp-env.override.json
 
       - name: Start WordPress (wp-env; mounts the parent and tests/fixtures/oogle-fixture-child)
         run: npx -y @wordpress/env@11 start
@@ -147,11 +165,38 @@ jobs:
         run: |
           npx -y @wordpress/env@11 run cli sh -c 'if [ -s wp-content/debug.log ]; then cat wp-content/debug.log; exit 1; fi; echo "debug.log empty"'
 
+  upgrade:
+    name: End-to-end upgrade through the real core upgrader (previous Release → this commit; this commit → next)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+
+      # No signing key in CI (it lives with the maintainer), so the scenarios
+      # that need a validly signed package are skipped here and run locally
+      # before every tag (docs/RELEASES.md). What runs: the published release
+      # updating to this commit on the bulk, single and WP-CLI paths (expected
+      # to succeed while the published release predates signature checks, and
+      # to be refused as "not signed by a key this theme trusts" once it
+      # verifies them), a tampered archive refused, and this commit's own
+      # fail-closed paths (no .sig, unknown key, downgrade).
+      - name: tests/e2e/run.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash tests/e2e/run.sh
+
   package:
     name: Production archive dry run, version and changelog consistency
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Version declared once, CHANGELOG has its section
         run: bash tools/check-version.sh

@@ -61,9 +61,12 @@ answers WordPress's own update check by reading the repository's GitHub Releases
 new versions appear in Appearance → Themes, Dashboard → Updates, auto-updates and
 `wp theme update` like any other theme. Only releases of the installed major are offered
 (1.x follows 1.x; see UPGRADE.md for moving to a new major). Before the parent is replaced
-the theme verifies the download against the release's published SHA-256 and checks that the
-extracted package is this theme at the expected version with compatible requirements — on
-every upgrader path, including automatic updates. Nothing a site owns lives inside the parent
+the theme verifies the download against the release's published SHA-256, verifies the
+release's Ed25519 signature against a public key built into the theme (the private key never
+leaves the maintainer's machine, so a compromised GitHub account cannot ship an update), and
+checks that the extracted package is this theme at the expected version with compatible
+requirements — on every upgrader path, including automatic updates. Trust model:
+[SECURITY.md](SECURITY.md). Nothing a site owns lives inside the parent
 directory, so an update cannot overwrite client work. Procedure, guarantees and the
 tested upgrade: [UPGRADE.md](UPGRADE.md). Release mechanics: [docs/RELEASES.md](docs/RELEASES.md).
 
@@ -111,10 +114,14 @@ Security reports: [SECURITY.md](SECURITY.md).
 1. Move CHANGELOG entries from *Unreleased* to a dated version; bump `Version:` in `style.css`
    and `Stable tag:` in `readme.txt`.
 2. Commit, tag `vX.Y.Z`, push the tag.
-3. `.github/workflows/release.yml` builds `oogle-theme.zip` with `git archive` (dev files
-   excluded by `.gitattributes export-ignore`), publishes a GitHub Release with the zip and its
-   SHA-256, and the updater picks it up on every site within six hours (or immediately via
-   Dashboard → Updates → Check again).
+3. `.github/workflows/release.yml` runs the full gate (including `tests/e2e/run.sh`, which
+   drives the real core upgrader), builds `oogle-theme.zip` with `git archive` (dev files
+   excluded by `.gitattributes export-ignore`), attests its build provenance and publishes a
+   GitHub Release with the zip and its SHA-256.
+4. `tools/sign-release.sh vX.Y.Z --upload` reproduces the archive from the tag, checks it is
+   byte-identical to the published asset, signs it with the maintainer's key and attaches
+   `oogle-theme.zip.sig`. The updater then picks the release up on every site within six hours
+   (or immediately via Dashboard → Updates → Check again).
 
 Full detail: [docs/RELEASES.md](docs/RELEASES.md).
 
