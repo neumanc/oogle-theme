@@ -8,3 +8,5 @@ vendor/
 .env.*
 .idea/
 .vscode/
+tests/e2e/artifacts/
+.wp-env.override.json

@@ -3,8 +3,17 @@ name: Release
 # Tag vX.Y.Z → the complete gate (checks.yml) runs on the tagged commit; only
 # when every job has passed, and the commit is on main, is the production zip
 # built reproducibly with git archive (dev files excluded by .gitattributes
-# export-ignore), attached with its SHA-256 sidecar, and the GitHub Release
-# published. inc/updates.php on client sites requires both assets.
+# export-ignore), attested (SLSA build provenance, verifiable with
+# `gh attestation verify oogle-theme.zip --owner neumanc`), attached with its
+# SHA-256 sidecar, and the GitHub Release published and marked Latest.
+#
+# The Ed25519 signature (oogle-theme.zip.sig) is NOT produced here: the
+# signing key lives with the maintainer, never in CI, so a compromised token,
+# account or workflow cannot sign. After this workflow has published, run
+#   tools/sign-release.sh vX.Y.Z --upload
+# which reproduces the archive from the tag, proves it is byte-identical to the
+# published asset, signs it and attaches the .sig. inc/updates.php (1.2.0+)
+# offers a release only once all three assets are present.
 
 on:
   push:
@@ -20,13 +29,17 @@ jobs:
   release:
     needs: gate
     runs-on: ubuntu-latest
-    # contents: write is the one permission needed to create the Release and upload its assets.
+    # contents: write creates the Release and uploads its assets;
+    # id-token + attestations: write let the runner sign the provenance statement.
     permissions:
       contents: write
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Tag commit must be on main
         run: |
@@ -43,16 +56,26 @@ jobs:
           bash tools/check-archive.sh oogle-theme.zip "${GITHUB_REF_NAME#v}"
           cat oogle-theme.zip.sha256
 
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: oogle-theme.zip
+
       - name: Extract release notes
         run: |
           TAG="${GITHUB_REF_NAME#v}"
           awk -v tag="$TAG" '/^## \[/{p = index($0, "[" tag "]") > 0; if (!p && found) exit; if (p) found = 1} p' CHANGELOG.md > notes.md
           cat notes.md
 
-      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
-        with:
-          name: ${{ github.ref_name }}
-          body_path: notes.md
-          files: |
-            oogle-theme.zip
-            oogle-theme.zip.sha256
+      - name: Publish the GitHub Release (marked Latest)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --latest \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file notes.md \
+            oogle-theme.zip oogle-theme.zip.sha256
+          echo "::notice title=Sign the release::Run tools/sign-release.sh $GITHUB_REF_NAME --upload to attach oogle-theme.zip.sig; sites on 1.2.0+ are offered the release only once it is signed."

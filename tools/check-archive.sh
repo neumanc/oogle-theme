@@ -5,6 +5,8 @@
 set -euo pipefail
 ZIP="$1"
 LIST="$(unzip -Z1 "$ZIP")"
+if echo "$LIST" | grep -qE '(^|/)\.\.(/|$)|^/'; then echo 'archive has a traversal or absolute entry'; exit 1; fi
+if unzip -Z "$ZIP" | grep -qE '^l'; then echo 'archive contains a symbolic link'; exit 1; fi
 echo "$LIST" | awk -F/ '{print $1}' | sort -u | grep -qx 'oogle-theme' || { echo 'archive root is not oogle-theme/'; exit 1; }
 [ "$(echo "$LIST" | awk -F/ '{print $1}' | sort -u | wc -l)" -eq 1 ] || { echo 'archive has more than one top-level entry'; exit 1; }
 if echo "$LIST" | grep -E '(^|/)(\.git|\.github|\.gitattributes|\.gitignore|\.distignore|\.editorconfig|\.wp-env\.json|node_modules|vendor|docs|tools|tests|__MACOSX|\.DS_Store|\.map$|phpcs\.xml|AGENTS\.md|CONTRIBUTING\.md|SECURITY\.md|UPGRADE\.md|package(-lock)?\.json|composer\.(json|lock))(/|$)'; then
