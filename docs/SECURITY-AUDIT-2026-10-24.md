@@ -23,7 +23,7 @@ path, major-version policy). The attack surface a WordPress theme normally has w
 | Critical | 0 | — |
 | High | 0 | — |
 | Medium | 1 | 1 |
-| Low | 8 | 8 |
+| Low | 9 | 9 (one closed in the follow-up commit after publication) |
 | Informational / outside the repository | 2 | recommendations recorded |
 
 **What was fixed.** The Medium finding — the update checksum lived in the same GitHub Release
@@ -181,7 +181,21 @@ Each entry: component, root cause, prerequisites, realistic risk, fix, tests.
 - **Found by it.** Finding 2.5, and two mock-fidelity issues in the harness itself (core's
   plugin update endpoint shape; WP-CLI's wordpress.org theme-information lookup).
 
-### 2.10 Informational — repository settings (not changed by the audit)
+### 2.9a Low — `git archive` is not byte-reproducible across git builds (found while signing)
+
+- **Observation.** The archive reproduced from `v1.2.0` with Apple Git 2.54 on macOS has
+  exactly the same content as the one the Ubuntu runner built (every extracted file identical,
+  same entries, same embedded commit id) but a different deflate stream, hence a different
+  SHA-256. RELEASES.md stated the zip was "a pure function of the tag"; it is a pure function
+  of the tag's *content*.
+- **Risk.** None to sites (the signature covers whatever bytes are published and verified
+  against the content of the tag). The risk was operational: the signing step refused, which
+  would have left 1.2.0+ sites without updates until resolved.
+- **Fix.** `tools/sign-release.sh` downloads the published asset, checks it against its own
+  `.sha256`, and when the bytes differ from the local reproduction extracts both and signs the
+  published asset only if every file is identical (`diff -r`), printing both digests; any
+  content difference still refuses. RELEASES.md corrected.
+
 
 Observed via the GitHub API: `main` is not protected, no rulesets, Actions `allowed_actions:
 all`, `sha_pinning_required: false`, Dependabot security updates disabled (secret scanning and
@@ -247,24 +261,32 @@ shared.
 
 ## 4. Release
 
-Recorded after publication (the archive checksum depends on the tagged commit, so the values
-below are filled in by the follow-up commit on `main`):
-
 | Item | Value |
 |---|---|
-| Version | 1.2.0 |
-| Tag | `v1.2.0` |
-| Release | https://github.com/neumanc/oogle-theme/releases/tag/v1.2.0 |
-| Commit | _recorded after publication_ |
-| `oogle-theme.zip` SHA-256 | _recorded after publication_ (also in the `oogle-theme.zip.sha256` asset) |
-| Signature | `oogle-theme.zip.sig`, key id `dc56680030516262` |
-| Release date | 2026-10-24 |
-| Update installation results | _recorded after publication_ |
+| Version | 1.2.0 (minor: additions to the release contract, no public API change) |
+| Tag | `v1.2.0` → commit `c518b7947efa862ab65f2ef8863337a5c988a909` (merge of PR #1 into `main`) |
+| Release | https://github.com/neumanc/oogle-theme/releases/tag/v1.2.0 — public, not draft, not prerelease, marked *Latest* (`/releases/latest` answers `v1.2.0`) |
+| Published | 2026-10-25T01:22:26Z (UTC; 24 October 2026 local) by `.github/workflows/release.yml` run 40150182662 after all eight gate jobs passed |
+| `oogle-theme.zip` | 121 329 bytes, SHA-256 `e2cf7a96dcfbc6b18dcda9f1e866535ac51c503757364104c0b317dea90816e3` (equals the `oogle-theme.zip.sha256` asset and GitHub's own asset digest) |
+| `oogle-theme.zip.sig` | Ed25519 over the archive, key id `dc56680030516262`; verifies with OpenSSL against `tools/release-signing.pub` (`tools/verify-release.sh v1.2.0`: ok / ok) |
+| Provenance | `gh attestation verify oogle-theme.zip --owner neumanc`: built by `.github/workflows/release.yml` at `refs/tags/v1.2.0` from commit `c518b79…` |
+| Reproducibility | The archive reproduced locally from the tag (Apple Git 2.54) has identical content (every extracted file byte-identical, same 65 entries, same commit comment) but a different deflate stream from the runner's, so the SHA-256 differs (`152ac694…` locally). `git archive` is content-deterministic, not byte-deterministic across git/zlib builds. `tools/sign-release.sh` therefore signs the published asset when, and only when, its extracted content equals the reproduction; this run used that path. Recorded as a Low finding, closed in the follow-up commit. |
+
+**Update installation results (live GitHub, no mock; `tests/e2e` lab, WordPress 7.1 / PHP 8.4,
+fixture child active).**
+
+| Check | Result |
+|---|---|
+| A real 1.1.0 parent (the published v1.1.0 asset) discovers 1.2.0 through core's update check from live GitHub; package URL is the canonical release asset | pass |
+| `wp theme update oogle-theme` on that site: parent 1.1.0 → 1.2.0, "Updated 1 of 1 themes"; child files byte-identical; child still active; theme mods unchanged; maintenance mode off | pass |
+| The installed 1.2.0 (65 files) is byte-identical to the published asset | pass |
+| The installed 1.2.0 updater discovers its own release (filed under `no_update`, as core does for the current version), caches the `.sha256` and `.sig` URLs, and its download gate downloads the live asset, matches the SHA-256 and verifies the live Ed25519 signature against the pinned key | pass |
+| `debug.log` after both | empty |
 
 ## 5. Deployment recommendation
 
-- **Can production sites update safely?** Yes, once §4 is filled in with a passing end-to-end
-  verification against the real GitHub release. The release changes no public API; the parent
+- **Can production sites update safely?** Yes. §4 records the end-to-end verification against
+  the real GitHub release. The release changes no public API; the parent
   directory is the only thing replaced; the end-to-end test proves the child's files, the
   active theme, theme mods and content survive on every path.
 - **Sites needing manual attention.** None known. A site whose host blocks `github.com`

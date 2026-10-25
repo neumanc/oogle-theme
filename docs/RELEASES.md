@@ -80,8 +80,11 @@ section at release.
    asset the workflow published, signs it with the maintainer's Ed25519 key and attaches
    `oogle-theme.zip.sig` to the Release. Sites on 1.2.0 or later are offered the release only
    once this asset exists (older updaters ignore it). Check with `tools/verify-release.sh vX.Y.Z`.
-5. Reproduce locally at any time with the same `git archive` command; the zip is a pure
-   function of the tag.
+5. Reproduce locally at any time with the same `git archive` command. The archive's *content*
+   is a pure function of the tag; its *bytes* are not across git/zlib builds (Apple Git and
+   the Ubuntu runner compress identically-sized trees differently, so the SHA-256 differs).
+   `tools/sign-release.sh` therefore compares extracted content, not bytes, before signing the
+   published asset, and `tools/verify-release.sh` is the check for a downloaded release.
 
 ## Release signing
 

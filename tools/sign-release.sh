@@ -64,11 +64,31 @@ if [[ "$TARGET" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 	git rev-parse -q --verify "refs/tags/$TAG" >/dev/null || { echo "no local tag $TAG (git fetch --tags)"; exit 1; }
 	git archive --format=zip --prefix=oogle-theme/ "$TAG" -o "$WORK/oogle-theme.zip"
 	bash tools/check-archive.sh "$WORK/oogle-theme.zip" "${TAG#v}" >/dev/null
-	gh release download "$TAG" --pattern 'oogle-theme.zip.sha256' --dir "$WORK" --clobber
-	PUBLISHED="$(awk '{print $1}' "$WORK/oogle-theme.zip.sha256")"
+	mkdir -p "$WORK/published"
+	gh release download "$TAG" --pattern 'oogle-theme.zip*' --dir "$WORK/published" --clobber
+	PUBLISHED="$(awk '{print $1}' "$WORK/published/oogle-theme.zip.sha256")"
+	DOWNLOADED="$(shasum -a 256 "$WORK/published/oogle-theme.zip" | awk '{print $1}')"
+	[ "$PUBLISHED" = "$DOWNLOADED" ] || { echo "REFUSING: the published asset ($DOWNLOADED) does not match its own .sha256 ($PUBLISHED)"; exit 1; }
 	LOCAL="$(shasum -a 256 "$WORK/oogle-theme.zip" | awk '{print $1}')"
-	[ "$PUBLISHED" = "$LOCAL" ] || { echo "REFUSING: the published asset ($PUBLISHED) is not the archive reproduced from $TAG ($LOCAL)"; exit 1; }
-	echo "reproduced $TAG: published asset matches ($LOCAL)"
+	if [ "$PUBLISHED" = "$LOCAL" ]; then
+		echo "reproduced $TAG: published asset is byte-identical ($LOCAL)"
+	else
+		# git archive is content-deterministic but not byte-deterministic across git/zlib
+		# builds (Apple Git vs the Ubuntu runner compress the same files differently). The
+		# signature attests the CONTENT of the tag, so the published archive is accepted when
+		# every extracted file is identical to the reproduction; anything else is refused.
+		mkdir -p "$WORK/x-local" "$WORK/x-published"
+		(cd "$WORK/x-local" && unzip -q ../oogle-theme.zip) && (cd "$WORK/x-published" && unzip -q ../published/oogle-theme.zip)
+		bash tools/check-archive.sh "$WORK/published/oogle-theme.zip" "${TAG#v}" >/dev/null
+		if diff -r "$WORK/x-local" "$WORK/x-published" >/dev/null; then
+			echo "reproduced $TAG: published asset ($PUBLISHED) differs in zip encoding from the local build ($LOCAL) but every extracted file is identical; signing the published asset"
+			cp "$WORK/published/oogle-theme.zip" "$WORK/oogle-theme.zip"
+		else
+			echo "REFUSING: the published asset ($PUBLISHED) has different CONTENT from the archive reproduced from $TAG ($LOCAL):"
+			diff -rq "$WORK/x-local" "$WORK/x-published" | head -20
+			exit 1
+		fi
+	fi
 	sign_file "$WORK/oogle-theme.zip"
 	if [ "$UPLOAD" = 1 ]; then
 		gh release upload "$TAG" "$WORK/oogle-theme.zip.sig" --clobber

@@ -5,6 +5,13 @@ Versioning: see docs/RELEASES.md.
 
 ## [Unreleased]
 
+### Fixed
+- `tools/sign-release.sh`: `git archive` is content-deterministic but not byte-deterministic
+  across git/zlib builds, so the byte comparison with the published asset refused the first
+  signing run. The script now signs the published asset when every extracted file is identical
+  to the local reproduction (and still refuses any content difference). docs/RELEASES.md and
+  the audit report (§2.9a, §4) record the finding and the 1.2.0 release data.
+
 ## [1.2.0] — 2026-10-24
 
 A security release from the full audit of 24 October 2026 (report: `docs/SECURITY-AUDIT-2026-10-24.md`).
