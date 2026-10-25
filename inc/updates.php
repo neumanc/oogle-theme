@@ -13,7 +13,8 @@
  *  - a published, non-draft, non-prerelease Release tagged vX.Y.Z;
  *  - one asset named "<theme-dir>.zip" (e.g. oogle-theme.zip) whose single
  *    top-level folder is the theme directory (git archive --prefix), plus its
- *    "<asset>.sha256" sidecar (mandatory: a release without one is not offered);
+ *    "<asset>.sha256" sidecar and its "<asset>.sig" Ed25519 signature
+ *    (both mandatory since 1.2.0: a release without them is not offered);
  *  - style.css at that tag carries the same Version and both "Requires at
  *    least" and "Requires PHP", read from the tag — never inherited from the
  *    installed copy; a release whose requirements cannot be read is not offered.
@@ -37,13 +38,16 @@
  * cannot be downloaded by core's downloader. Use a public repository (the
  * theme is GPL) or a dedicated updater plugin.
  *
- * Before core replaces the installed parent, two more gates run on every
+ * Before core replaces the installed parent, three more gates run on every
  * upgrader path (single, bulk, automatic, WP-CLI, other plugins driving
  * Theme_Upgrader): the downloaded zip must match the release's published
- * SHA-256 (integrity of the transfer — not publisher authentication, since
- * the sidecar lives in the same Release), and the extracted package must be
- * this theme at exactly the version being installed with compatible,
- * declared requirements, a valid theme.json and a block-theme index.
+ * SHA-256 (integrity of the transfer), its Ed25519 signature must verify
+ * against a public key pinned in this file (publisher authentication: the
+ * private key never leaves the maintainer's machine, so a compromised GitHub
+ * account, token or Actions run cannot produce a release a site will install),
+ * and the extracted package must be this theme at exactly the version being
+ * installed with compatible, declared requirements, a valid theme.json, a
+ * block-theme index and no symbolic links.
  *
  * Nothing a site owns lives inside the parent directory (child theme,
  * mu-plugins, uploads, database), so replacing the directory is safe; the
@@ -111,6 +115,25 @@ function oogle_update_token_hosts(): array {
 }
 
 /**
+ * Public keys a release signature may verify against: key id => raw 32-byte
+ * Ed25519 public key, base64. Deliberately not filterable (like the token
+ * hosts): a key is added here, shipped in a release signed by a key already
+ * trusted, and only then may the old key be dropped in a later release
+ * (docs/RELEASES.md, "Release signing"). The key id is the first 16 hex
+ * characters of the SHA-256 of the raw public key, for log messages only.
+ *
+ * The corresponding private key lives outside every repository, with the
+ * maintainer (tools/sign-release.sh signs a reproduced archive with it).
+ *
+ * @return array<string, string>
+ */
+function oogle_update_signing_keys(): array {
+	return array(
+		'dc56680030516262' => 'J6gRmMt+xOSub10sHpgNq8Zf14SOkNC4xP+GRGOAAtU=',
+	);
+}
+
+/**
  * Strictly parse an https URL and return its lower-cased host, or null when
  * the URL is anything other than a plain https://host/path URL: no scheme or
  * a non-https scheme, no host, userinfo ("user@"), an explicit port, or a
@@ -144,14 +167,16 @@ function oogle_update_url_host( string $url ): ?string {
  * asset: https://github.com/{owner}/{repo}/releases/download/{tag}/{asset},
  * with no query string or fragment. Host comparison is exact; owner and
  * repository are compared case-insensitively (GitHub treats them so); the
- * asset file name must match exactly.
+ * asset file name must match exactly, and so must the tag when one is given
+ * (an asset of another release of the same repository is not this release's).
  *
  * @param string                           $url   browser_download_url from the API.
  * @param array{owner:string, repo:string} $repo  Repository from the Update URI.
  * @param string                           $asset Expected asset file name.
+ * @param string|null                      $tag   Expected tag (the release's tag_name), or null to accept any non-empty tag.
  * @return bool
  */
-function oogle_update_is_release_asset_url( string $url, array $repo, string $asset ): bool {
+function oogle_update_is_release_asset_url( string $url, array $repo, string $asset, ?string $tag = null ): bool {
 	if ( 'github.com' !== oogle_update_url_host( $url ) ) {
 		return false;
 	}
@@ -163,12 +188,13 @@ function oogle_update_is_release_asset_url( string $url, array $repo, string $as
 	if ( 6 !== count( $segments ) ) {
 		return false;
 	}
-	list( $owner, $name, $releases, $download, $tag, $file ) = $segments;
+	list( $owner, $name, $releases, $download, $url_tag, $file ) = $segments;
 	return 0 === strcasecmp( rawurldecode( $owner ), $repo['owner'] )
 		&& 0 === strcasecmp( rawurldecode( $name ), $repo['repo'] )
 		&& 'releases' === $releases
 		&& 'download' === $download
-		&& '' !== $tag
+		&& '' !== $url_tag
+		&& ( null === $tag || rawurldecode( $url_tag ) === $tag )
 		&& rawurldecode( $file ) === $asset;
 }
 
@@ -181,20 +207,24 @@ function oogle_update_is_release_asset_url( string $url, array $repo, string $as
  * therefore fails closed (no update offered) instead of being chased.
  *
  * The token is attached only when the FINAL url (after filters) is https on
- * a host in oogle_update_token_hosts(). Both the token and the no-redirect
- * rule are applied after the request-args filter, so a filter can adjust
- * timeouts or proxy settings but cannot re-enable redirects or redirect the
- * token elsewhere.
+ * a host in oogle_update_token_hosts(). The token, the no-redirect rule,
+ * certificate verification and the response-size cap are all applied after
+ * the request-args filter, so a filter can adjust timeouts or proxy settings
+ * but cannot re-enable redirects, switch off TLS verification, lift the size
+ * cap or redirect the token elsewhere.
  *
  * @param string $url    Absolute URL.
  * @param string $accept Accept header.
+ * @param int    $limit  Maximum response body size in bytes; a longer body is truncated by core and then fails validation.
  * @return string|WP_Error Body on HTTP 200, WP_Error otherwise.
  */
-function oogle_update_http_get( string $url, string $accept ) {
+function oogle_update_http_get( string $url, string $accept, int $limit = MB_IN_BYTES ) {
 	$args = array(
-		'timeout'     => 10,
-		'redirection' => 0,
-		'headers'     => array(
+		'timeout'             => 10,
+		'redirection'         => 0,
+		'sslverify'           => true,
+		'limit_response_size' => $limit,
+		'headers'             => array(
 			'Accept'     => $accept,
 			'User-Agent' => 'WordPress/' . get_bloginfo( 'version' ) . '; ' . home_url( '/' ),
 		),
@@ -204,14 +234,18 @@ function oogle_update_http_get( string $url, string $accept ) {
 	 * Filter the request arguments for update checks (e.g. a proxy).
 	 *
 	 * The Authorization header is added after this filter runs and only for
-	 * trusted hosts, and 'redirection' is forced back to 0 afterwards; a
-	 * filter cannot cause the token to be sent elsewhere or a 3xx to be chased.
+	 * trusted hosts; 'redirection' is forced back to 0, 'sslverify' to true
+	 * and 'limit_response_size' to the caller's cap afterwards. A filter
+	 * cannot cause the token to be sent elsewhere, a 3xx to be chased, an
+	 * unverified certificate to be accepted or an unbounded body to be read.
 	 *
 	 * @param array<string, mixed> $args wp_remote_get() arguments.
 	 * @param string               $url  Request URL.
 	 */
-	$args                = (array) apply_filters( 'oogle/updates/request_args', $args, $url );
-	$args['redirection'] = 0;
+	$args                        = (array) apply_filters( 'oogle/updates/request_args', $args, $url );
+	$args['redirection']         = 0;
+	$args['sslverify']           = true;
+	$args['limit_response_size'] = $limit;
 
 	if (
 		defined( 'OOGLE_GITHUB_TOKEN' ) && is_string( OOGLE_GITHUB_TOKEN ) && '' !== OOGLE_GITHUB_TOKEN
@@ -331,15 +365,16 @@ function oogle_update_latest_release( bool $force = false ): ?array {
  * rather than /releases/latest, so a 1.x site still finds a later 1.x
  * maintenance release after 2.0.0 has been published. A candidate must be
  * published (not draft, not prerelease), tagged vX.Y.Z, in the allowed
- * major, and carry both the theme zip and its .sha256 sidecar as
- * github.com release assets. Its own style.css at the tag must state the
+ * major, and carry the theme zip, its .sha256 sidecar and its .sig
+ * signature as github.com release assets of that very tag. Its own
+ * style.css at the tag must state the
  * same version and both requirements; if any of that cannot be established
  * the release is not offered ("fail closed"). Nothing is ever inherited from
  * the installed copy.
  *
  * @param array{owner:string, repo:string} $repo      Repository.
  * @param string|null                      $installed Installed version (defaults to the parent's style.css; tests pass one).
- * @return array{version:string, url:string, package:string, checksum:string, requires:string, requires_php:string}|WP_Error
+ * @return array{version:string, url:string, package:string, checksum:string, signature:string, requires:string, requires_php:string}|WP_Error
  */
 function oogle_update_fetch_release( array $repo, ?string $installed = null ) {
 	$installed = $installed ?? (string) wp_get_theme( get_template() )->get( 'Version' );
@@ -398,9 +433,10 @@ function oogle_update_fetch_release( array $repo, ?string $installed = null ) {
 	// The package must be a release asset named after the theme directory
 	// (oogle-theme.zip or oogle-theme-1.2.3.zip), never GitHub's auto zipball,
 	// and its download URL must be GitHub's own release-asset URL for this
-	// owner/repo/asset: exact host github.com, https, no userinfo/port/query.
-	// The same rule applies to the .sha256 sidecar, which is mandatory.
+	// owner/repo/tag/asset: exact host github.com, https, no userinfo/port/query.
+	// The same rule applies to the .sha256 and .sig sidecars, both mandatory.
 	$slug   = get_template();
+	$tag    = (string) $data['tag_name'];
 	$assets = array();
 	foreach ( (array) ( $data['assets'] ?? array() ) as $asset ) {
 		if ( ! is_array( $asset ) || empty( $asset['name'] ) || ! is_string( $asset['name'] ) || empty( $asset['browser_download_url'] ) || ! is_string( $asset['browser_download_url'] ) ) {
@@ -408,29 +444,40 @@ function oogle_update_fetch_release( array $repo, ?string $installed = null ) {
 		}
 		$assets[ $asset['name'] ] = $asset['browser_download_url'];
 	}
-	$package  = '';
-	$checksum = '';
+	$package   = '';
+	$checksum  = '';
+	$signature = '';
 	foreach ( $assets as $name => $url ) {
 		if ( ! preg_match( '/^' . preg_quote( $slug, '/' ) . '(?:-v?[0-9][0-9A-Za-z.-]*)?\.zip$/', $name ) ) {
 			continue;
 		}
-		if ( ! oogle_update_is_release_asset_url( $url, $repo, $name ) ) {
-			return new WP_Error( 'oogle_update_asset_url', sprintf( 'Release %s asset %s has an unexpected download URL.', $data['tag_name'], $name ) );
+		if ( ! oogle_update_is_release_asset_url( $url, $repo, $name, $tag ) ) {
+			return new WP_Error( 'oogle_update_asset_url', sprintf( 'Release %s asset %s has an unexpected download URL.', $tag, $name ) );
 		}
 		$package = $url;
-		if ( isset( $assets[ $name . '.sha256' ] ) ) {
-			if ( ! oogle_update_is_release_asset_url( $assets[ $name . '.sha256' ], $repo, $name . '.sha256' ) ) {
-				return new WP_Error( 'oogle_update_asset_url', sprintf( 'Release %s asset %s.sha256 has an unexpected download URL.', $data['tag_name'], $name ) );
+		foreach ( array( '.sha256', '.sig' ) as $suffix ) {
+			if ( ! isset( $assets[ $name . $suffix ] ) ) {
+				continue;
 			}
-			$checksum = $assets[ $name . '.sha256' ];
+			if ( ! oogle_update_is_release_asset_url( $assets[ $name . $suffix ], $repo, $name . $suffix, $tag ) ) {
+				return new WP_Error( 'oogle_update_asset_url', sprintf( 'Release %s asset %s%s has an unexpected download URL.', $tag, $name, $suffix ) );
+			}
+			if ( '.sha256' === $suffix ) {
+				$checksum = $assets[ $name . $suffix ];
+			} else {
+				$signature = $assets[ $name . $suffix ];
+			}
 		}
 		break;
 	}
 	if ( '' === $package ) {
-		return new WP_Error( 'oogle_update_asset', sprintf( 'Release %s has no %s.zip asset.', $data['tag_name'], $slug ) );
+		return new WP_Error( 'oogle_update_asset', sprintf( 'Release %s has no %s.zip asset.', $tag, $slug ) );
 	}
 	if ( '' === $checksum ) {
-		return new WP_Error( 'oogle_update_checksum_missing', sprintf( 'Release %s publishes no .sha256 for its package; not offered.', $data['tag_name'] ) );
+		return new WP_Error( 'oogle_update_checksum_missing', sprintf( 'Release %s publishes no .sha256 for its package; not offered.', $tag ) );
+	}
+	if ( '' === $signature ) {
+		return new WP_Error( 'oogle_update_signature_missing', sprintf( 'Release %s publishes no .sig for its package; not offered.', $tag ) );
 	}
 
 	// Requirements of the NEW version come from its own style.css at the tag,
@@ -439,7 +486,7 @@ function oogle_update_fetch_release( array $repo, ?string $installed = null ) {
 	// is not offered.
 	$raw = sprintf( 'https://raw.githubusercontent.com/%s/%s/%s/style.css', rawurlencode( $repo['owner'] ), rawurlencode( $repo['repo'] ), rawurlencode( $data['tag_name'] ) );
 	$raw = (string) apply_filters( 'oogle/updates/style_url', $raw, $data['tag_name'] );
-	$css = oogle_update_http_get( $raw, 'text/plain' );
+	$css = oogle_update_http_get( $raw, 'text/plain', 64 * KB_IN_BYTES );
 	if ( is_wp_error( $css ) ) {
 		return new WP_Error( 'oogle_update_requirements', sprintf( 'Requirements of release %s could not be read: %s', $data['tag_name'], $css->get_error_message() ) );
 	}
@@ -456,6 +503,7 @@ function oogle_update_fetch_release( array $repo, ?string $installed = null ) {
 		'url'          => is_string( $data['html_url'] ?? null ) && 'github.com' === oogle_update_url_host( $data['html_url'] ) ? esc_url_raw( $data['html_url'] ) : '',
 		'package'      => esc_url_raw( $package ),
 		'checksum'     => esc_url_raw( $checksum ),
+		'signature'    => esc_url_raw( $signature ),
 		'requires'     => $req['requires'],
 		'requires_php' => $req['requires_php'],
 	);
@@ -581,14 +629,122 @@ function oogle_update_published_checksum( string $url ) {
 }
 
 /**
+ * Parse a release signature file (the .sig asset, written by
+ * tools/sign-release.sh): "key: value" lines, of which "signature" is the
+ * base64 of a 64-byte Ed25519 detached signature over the package bytes and
+ * "key-id" names the public key for log messages. Unknown lines are ignored
+ * so the format can grow; a missing or malformed signature is an error.
+ *
+ * @param string $body File contents.
+ * @return array{key_id:string, signature:string}|WP_Error Raw 64-byte signature.
+ */
+function oogle_update_parse_signature( string $body ) {
+	$key_id    = '';
+	$signature = '';
+	foreach ( preg_split( '/\r\n|\r|\n/', $body ) as $line ) {
+		if ( ! preg_match( '/^([a-z-]+):\s*(\S.*?)\s*$/i', $line, $m ) ) {
+			continue;
+		}
+		$field = strtolower( $m[1] );
+		if ( 'signature' === $field && '' === $signature ) {
+			$signature = $m[2];
+		} elseif ( 'key-id' === $field && '' === $key_id && preg_match( '/^[a-f0-9]{16}$/', $m[2] ) ) {
+			$key_id = $m[2];
+		}
+	}
+	if ( '' === $signature || ! preg_match( '#^[A-Za-z0-9+/]{86}==$#', $signature ) ) {
+		return new WP_Error( 'oogle_update_signature_malformed', 'Signature file does not contain an Ed25519 signature.' );
+	}
+	$raw = base64_decode( $signature, true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- decoding a signature, not code.
+	if ( ! is_string( $raw ) || SODIUM_CRYPTO_SIGN_BYTES !== strlen( $raw ) ) {
+		return new WP_Error( 'oogle_update_signature_malformed', 'Signature file does not contain an Ed25519 signature.' );
+	}
+	return array(
+		'key_id'    => $key_id,
+		'signature' => $raw,
+	);
+}
+
+/**
+ * Fetch the published signature of the package (the .sig sidecar asset).
+ *
+ * Same transport rules as the checksum: a github.com release asset read with
+ * core's safe client through GitHub's asset redirect, no token, tiny size cap.
+ *
+ * @param string $url Sidecar URL from the validated release.
+ * @return array{key_id:string, signature:string}|WP_Error
+ */
+function oogle_update_published_signature( string $url ) {
+	if ( 'github.com' !== oogle_update_url_host( $url ) ) {
+		return new WP_Error( 'oogle_update_signature_url', 'Signature must be a github.com release asset.' );
+	}
+	$response = wp_safe_remote_get(
+		$url,
+		array(
+			'timeout'             => 15,
+			'redirection'         => 3,
+			'limit_response_size' => 4096,
+			'headers'             => array( 'Accept' => 'text/plain' ),
+		)
+	);
+	if ( is_wp_error( $response ) ) {
+		return $response;
+	}
+	if ( 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+		return new WP_Error( 'oogle_update_signature_http', sprintf( 'Signature download returned HTTP %d.', (int) wp_remote_retrieve_response_code( $response ) ) );
+	}
+	return oogle_update_parse_signature( (string) wp_remote_retrieve_body( $response ) );
+}
+
+/**
+ * Verify a file against a parsed release signature and the pinned keys.
+ *
+ * Every pinned key is tried (there is one, two during a rotation), so a
+ * signature made with any key the installed theme trusts verifies. Ed25519
+ * verification is constant-time inside libsodium; WordPress ships a polyfill
+ * (sodium_compat) for hosts without the extension, so the function always
+ * exists — if it somehow does not, the update fails closed.
+ *
+ * @param string                     $file      Local path of the downloaded package.
+ * @param array{signature:string}    $signature Parsed signature (oogle_update_parse_signature()).
+ * @param array<string, string>|null $keys      Key id => base64 public key; null for the pinned set. Tests pass their own.
+ * @return true|WP_Error
+ */
+function oogle_update_verify_signature( string $file, array $signature, ?array $keys = null ) {
+	if ( ! function_exists( 'sodium_crypto_sign_verify_detached' ) ) {
+		return new WP_Error( 'oogle_update_signature_unsupported', __( 'This server cannot verify Ed25519 signatures; the update was not applied.', 'oogle' ) );
+	}
+	$message = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local temp file.
+	if ( ! is_string( $message ) || '' === $message ) {
+		return new WP_Error( 'oogle_update_package_unreadable', __( 'The downloaded package could not be read.', 'oogle' ) );
+	}
+	foreach ( $keys ?? oogle_update_signing_keys() as $public ) {
+		$raw = base64_decode( (string) $public, true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- decoding a public key, not code.
+		if ( ! is_string( $raw ) || SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES !== strlen( $raw ) ) {
+			continue;
+		}
+		try {
+			if ( sodium_crypto_sign_verify_detached( $signature['signature'], $message, $raw ) ) {
+				return true;
+			}
+		} catch ( SodiumException $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch -- a malformed input is simply not a valid signature.
+			continue;
+		}
+	}
+	return new WP_Error( 'oogle_update_signature_invalid', __( 'The downloaded package is not signed by a key this theme trusts; the update was not applied.', 'oogle' ) );
+}
+
+/**
  * Download the package for an update of this theme and verify it against
- * the release's published SHA-256 before core unpacks it.
+ * the release's published SHA-256 and Ed25519 signature before core unpacks it.
  *
  * Hooked to upgrader_pre_download, which every Theme_Upgrader path runs
  * (single, bulk, automatic, WP-CLI, and other plugins driving the upgrader).
  * Returning a file path makes core treat it as its own download. If another
  * hook already supplied a file, that file is verified instead of trusted.
  * Anything short of a match fails the update before any file is replaced.
+ * The manual upload path (Appearance → Themes → Add New → Upload) carries no
+ * theme context and is not gated here: it is the documented escape hatch.
  *
  * @param bool|string|WP_Error $reply      Earlier answer.
  * @param string               $package    Package URL.
@@ -604,9 +760,18 @@ function oogle_update_pre_download( $reply, $package, $upgrader, $hook_extra = a
 	if ( null === $release || ! is_string( $package ) || $package !== $release['package'] ) {
 		return new WP_Error( 'oogle_update_package_unknown', __( 'The package is not the release the theme updater validated; the update was not applied.', 'oogle' ) );
 	}
+	if ( empty( $release['signature'] ) || ! is_string( $release['signature'] ) ) {
+		// A release cached by an older updater (no signature recorded): refuse, the next check records one.
+		oogle_update_flush_cache();
+		return new WP_Error( 'oogle_update_signature_missing', __( 'The release publishes no signature for its package; the update was not applied.', 'oogle' ) );
+	}
 	$expected = oogle_update_published_checksum( $release['checksum'] );
 	if ( is_wp_error( $expected ) ) {
 		return $expected;
+	}
+	$signature = oogle_update_published_signature( $release['signature'] );
+	if ( is_wp_error( $signature ) ) {
+		return $signature;
 	}
 
 	$file = $reply;
@@ -628,6 +793,13 @@ function oogle_update_pre_download( $reply, $package, $upgrader, $hook_extra = a
 			wp_delete_file( $file );
 		}
 		return new WP_Error( 'oogle_update_checksum_mismatch', __( 'The downloaded package does not match the SHA-256 published with the release; the update was not applied.', 'oogle' ) );
+	}
+	$verified = oogle_update_verify_signature( $file, $signature );
+	if ( is_wp_error( $verified ) ) {
+		if ( false === $reply ) {
+			wp_delete_file( $file );
+		}
+		return $verified;
 	}
 	return $file;
 }
@@ -707,8 +879,40 @@ function oogle_update_validate_package( string $directory, string $expected ) {
 	if ( ! is_array( $theme_json ) || empty( $theme_json['version'] ) || ! is_int( $theme_json['version'] ) || ! isset( $theme_json['settings'] ) || ! is_array( $theme_json['settings'] ) ) {
 		return $fail( 'oogle_update_package_theme_json', __( 'theme.json is not a valid theme.json document.', 'oogle' ) );
 	}
+	// Core's unzip refuses "../" entries and writes zip symlinks as plain files
+	// (wp-admin/includes/file.php), so an extracted package never contains a
+	// link. A release is a git archive and never ships one either; finding one
+	// means the package is not ours. Defence in depth, not the primary control.
+	$link = oogle_update_find_symlink( $directory );
+	if ( '' !== $link ) {
+		return $fail( 'oogle_update_package_symlink', sprintf( 'it contains a symbolic link (%s).', $link ) );
+	}
 
 	return true;
+}
+
+/**
+ * First symbolic link under a directory (relative path), or '' when none.
+ *
+ * @param string $directory Directory to walk (not followed into links).
+ * @return string
+ */
+function oogle_update_find_symlink( string $directory ): string {
+	$directory = untrailingslashit( $directory );
+	try {
+		$iterator = new RecursiveIteratorIterator(
+			new RecursiveDirectoryIterator( $directory, FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_FILEINFO ),
+			RecursiveIteratorIterator::SELF_FIRST
+		);
+		foreach ( $iterator as $path => $info ) {
+			if ( $info instanceof SplFileInfo && $info->isLink() ) {
+				return ltrim( substr( (string) $path, strlen( $directory ) ), '/' );
+			}
+		}
+	} catch ( UnexpectedValueException $e ) {
+		return '(unreadable)';
+	}
+	return '';
 }
 
 /**
@@ -741,6 +945,12 @@ function oogle_update_source_selection( $source, string $remote_source, WP_Upgra
 		// here would expose the themes still being replaced after this one.
 		if ( empty( $upgrader->bulk ) ) {
 			$upgrader->maintenance_mode( false );
+		}
+		// Core returns the error without clearing its working directory, which
+		// would leave the rejected package's files (PHP included) extracted under
+		// wp-content/upgrade/. Remove them; nothing of the site is in there.
+		if ( $wp_filesystem && '' !== $remote_source && $wp_filesystem->is_dir( $remote_source ) ) {
+			$wp_filesystem->delete( $remote_source, true );
 		}
 		return $valid;
 	}

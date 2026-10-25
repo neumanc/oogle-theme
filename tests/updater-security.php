@@ -103,6 +103,11 @@ foreach ( $pkg_cases as $url => $expect ) {
 	$got = oogle_update_is_release_asset_url( $url, $repo, $asset );
 	t( 'pkg(' . $url . ')', $got === $expect, 'got ' . var_export( $got, true ) );
 }
+$v1 = 'https://github.com/neumanc/oogle-theme/releases/download/v1.0.0/oogle-theme.zip';
+t( 'pkg with expected tag v1.0.0 → accepted', true === oogle_update_is_release_asset_url( $v1, $repo, $asset, 'v1.0.0' ) );
+t( 'pkg of another tag (v0.9.0 asset offered as v1.0.0) → rejected', false === oogle_update_is_release_asset_url( $v1, $repo, $asset, 'v0.9.0' ) );
+t( 'pkg tag comparison is exact (V1.0.0 ≠ v1.0.0)', false === oogle_update_is_release_asset_url( $v1, $repo, $asset, 'V1.0.0' ) );
+t( 'pkg tag with percent-encoding decodes before comparison', true === oogle_update_is_release_asset_url( 'https://github.com/neumanc/oogle-theme/releases/download/v1%2E0%2E0/oogle-theme.zip', $repo, $asset, 'v1.0.0' ) );
 
 echo "\n== Mocked API scenarios (pre_http_request; records URL, Authorization presence, redirection) ==\n";
 $log = array();
@@ -134,11 +139,15 @@ $release = function ( array $over = array() ) {
 			'assets'     => array(
 				array( 'name' => 'oogle-theme.zip', 'browser_download_url' => 'https://github.com/neumanc/oogle-theme/releases/download/v1.9.9/oogle-theme.zip' ),
 				array( 'name' => 'oogle-theme.zip.sha256', 'browser_download_url' => 'https://github.com/neumanc/oogle-theme/releases/download/v1.9.9/oogle-theme.zip.sha256' ),
+				array( 'name' => 'oogle-theme.zip.sig', 'browser_download_url' => 'https://github.com/neumanc/oogle-theme/releases/download/v1.9.9/oogle-theme.zip.sig' ),
 			),
 		),
 		$over
 	);
 };
+$sig_asset = fn( string $tag = 'v1.9.9', string $name = 'oogle-theme.zip' ) => array( 'name' => "$name.sig", 'browser_download_url' => "https://github.com/neumanc/oogle-theme/releases/download/$tag/$name.sig" );
+$sha_asset = fn( string $tag = 'v1.9.9', string $name = 'oogle-theme.zip' ) => array( 'name' => "$name.sha256", 'browser_download_url' => "https://github.com/neumanc/oogle-theme/releases/download/$tag/$name.sha256" );
+$zip_asset = fn( string $tag = 'v1.9.9', string $name = 'oogle-theme.zip', ?string $url = null ) => array( 'name' => $name, 'browser_download_url' => $url ?? "https://github.com/neumanc/oogle-theme/releases/download/$tag/$name" );
 $run = function ( $api_body, $style_body = null, ?string $installed = '1.0.0' ) use ( &$mock, &$log, $ok200, $code, $style ) {
 	$log  = array();
 	$mock = function ( $url ) use ( $api_body, $style_body, $ok200, $code, $style ) {
@@ -189,12 +198,24 @@ $r = $run( $release( array( 'assets' => array( array( 'name' => 'theme.zip', 'br
 t( 'wrong asset name → rejected', $is_err( $r, 'oogle_update_asset' ) );
 $r = $run( $release( array( 'assets' => array( array( 'name' => 'oogle-theme.zip', 'browser_download_url' => 'https://github.com/neumanc/oogle-theme/releases/download/v1.9.9/other.zip' ) ) ) ) );
 t( 'asset name/URL filename mismatch → rejected', $is_err( $r, 'oogle_update_asset_url' ) );
-$r = $run( $release( array( 'assets' => array( array( 'name' => 'oogle-theme-1.9.9.zip', 'browser_download_url' => 'https://github.com/neumanc/oogle-theme/releases/download/v1.9.9/oogle-theme-1.9.9.zip' ), array( 'name' => 'oogle-theme-1.9.9.zip.sha256', 'browser_download_url' => 'https://github.com/neumanc/oogle-theme/releases/download/v1.9.9/oogle-theme-1.9.9.zip.sha256' ) ) ) ) );
-t( 'versioned asset name (oogle-theme-1.9.9.zip) with sidecar → accepted', is_array( $r ) );
-$r = $run( $release( array( 'assets' => array( array( 'name' => 'oogle-theme.zip', 'browser_download_url' => 'https://github.com/neumanc/oogle-theme/releases/download/v1.9.9/oogle-theme.zip' ) ) ) ) );
+$r = $run( $release( array( 'assets' => array( $zip_asset( 'v1.9.9', 'oogle-theme-1.9.9.zip' ), $sha_asset( 'v1.9.9', 'oogle-theme-1.9.9.zip' ), $sig_asset( 'v1.9.9', 'oogle-theme-1.9.9.zip' ) ) ) ) );
+t( 'versioned asset name (oogle-theme-1.9.9.zip) with sidecars → accepted', is_array( $r ) );
+$r = $run( $release( array( 'assets' => array( $zip_asset(), $sig_asset() ) ) ) );
 t( 'zip without .sha256 sidecar → rejected (checksum mandatory)', $is_err( $r, 'oogle_update_checksum_missing' ) );
-$r = $run( $release( array( 'assets' => array( array( 'name' => 'oogle-theme.zip', 'browser_download_url' => 'https://github.com/neumanc/oogle-theme/releases/download/v1.9.9/oogle-theme.zip' ), array( 'name' => 'oogle-theme.zip.sha256', 'browser_download_url' => 'https://attacker.example/oogle-theme.zip.sha256' ) ) ) ) );
+$r = $run( $release( array( 'assets' => array( $zip_asset(), $sha_asset() ) ) ) );
+t( 'zip without .sig → rejected (signature mandatory)', $is_err( $r, 'oogle_update_signature_missing' ) );
+$r = $run( $release( array( 'assets' => array( $zip_asset(), $sig_asset(), array( 'name' => 'oogle-theme.zip.sha256', 'browser_download_url' => 'https://attacker.example/oogle-theme.zip.sha256' ) ) ) ) );
 t( 'sidecar on another host → rejected', $is_err( $r, 'oogle_update_asset_url' ) );
+$r = $run( $release( array( 'assets' => array( $zip_asset(), $sha_asset(), array( 'name' => 'oogle-theme.zip.sig', 'browser_download_url' => 'https://attacker.example/oogle-theme.zip.sig' ) ) ) ) );
+t( 'signature on another host → rejected', $is_err( $r, 'oogle_update_asset_url' ) );
+$r = $run( $release( array( 'assets' => array( $zip_asset( 'v1.9.8' ), $sha_asset(), $sig_asset() ) ) ) );
+t( 'package URL of another tag (v1.9.8 asset in the v1.9.9 release) → rejected', $is_err( $r, 'oogle_update_asset_url' ) );
+$r = $run( $release( array( 'assets' => array( $zip_asset(), $sha_asset( 'v1.9.8' ), $sig_asset() ) ) ) );
+t( 'sidecar URL of another tag → rejected', $is_err( $r, 'oogle_update_asset_url' ) );
+$r = $run( $release( array( 'assets' => array( $zip_asset(), $sha_asset(), $sig_asset( 'v1.9.8' ) ) ) ) );
+t( 'signature URL of another tag → rejected', $is_err( $r, 'oogle_update_asset_url' ) );
+$r = $run( $release() );
+t( 'valid release → signature sidecar URL recorded', is_array( $r ) && 'https://github.com/neumanc/oogle-theme/releases/download/v1.9.9/oogle-theme.zip.sig' === $r['signature'] );
 $r = $run( $release( array( 'tag_name' => 'latest' ) ) );
 t( 'invalid semver tag → no release offered', $is_err( $r, 'oogle_update_no_release' ) );
 $r = $run( $release( array( 'tag_name' => 'v1.0' ) ) );
@@ -247,6 +268,28 @@ $log  = array();
 oogle_update_http_get( 'https://api.github.com/repos/neumanc/oogle-theme/releases/latest', 'application/json' );
 remove_filter( 'oogle/updates/request_args', $f );
 t( 'filter set redirection=5; effective value is always 0', 0 === $log[0]['redirection'] && $log[0]['auth'] === $with_token, wp_json_encode( $log[0] ) );
+
+echo "\n== Transport hardening: TLS verification and response-size cap cannot be lifted ==\n";
+$seen = array();
+$spy  = function ( $pre, $args, $url ) use ( &$seen ) {
+	$seen = $args;
+	return $pre;
+};
+add_filter( 'pre_http_request', $spy, 9, 3 );
+$weaken = function ( $a ) { $a['sslverify'] = false; unset( $a['limit_response_size'] ); $a['redirection'] = 9; return $a; };
+add_filter( 'oogle/updates/request_args', $weaken );
+$mock = fn() => $code( 500 );
+oogle_update_http_get( 'https://api.github.com/repos/neumanc/oogle-theme/releases?per_page=30', 'application/json' );
+remove_filter( 'oogle/updates/request_args', $weaken );
+t( 'sslverify forced true after the filter', true === ( $seen['sslverify'] ?? null ), wp_json_encode( $seen['sslverify'] ?? null ) );
+t( 'limit_response_size restored after the filter (1 MB for the API)', MB_IN_BYTES === ( $seen['limit_response_size'] ?? null ) );
+t( 'redirection forced 0 after the filter', 0 === ( $seen['redirection'] ?? null ) );
+$mock = function ( $url ) use ( $ok200, $release, $style ) {
+	return str_starts_with( $url, 'https://api.github.com/' ) ? $ok200( wp_json_encode( $release() ) ) : $ok200( $style );
+};
+oogle_update_fetch_release( $repo, '1.0.0' );
+t( 'style.css request capped at 64 KB', 64 * KB_IN_BYTES === ( $seen['limit_response_size'] ?? null ), wp_json_encode( $seen['limit_response_size'] ?? null ) );
+remove_filter( 'pre_http_request', $spy, 9 );
 
 echo "\n== Filtered api_url / style_url off-host: no token ==\n";
 $g = fn() => 'https://attacker.example/releases/latest';
@@ -333,6 +376,7 @@ $list = function ( array $tags, array $over = array() ) use ( $release ) {
 			'assets'   => array(
 				array( 'name' => 'oogle-theme.zip', 'browser_download_url' => "https://github.com/neumanc/oogle-theme/releases/download/$tag/oogle-theme.zip" ),
 				array( 'name' => 'oogle-theme.zip.sha256', 'browser_download_url' => "https://github.com/neumanc/oogle-theme/releases/download/$tag/oogle-theme.zip.sha256" ),
+				array( 'name' => 'oogle-theme.zip.sig', 'browser_download_url' => "https://github.com/neumanc/oogle-theme/releases/download/$tag/oogle-theme.zip.sig" ),
 			),
 		), $over[ $tag ] ?? array() ) );
 	}
@@ -396,18 +440,72 @@ $mock = fn() => $code( 404 );
 t( 'sidecar 404 → error', $is_err( oogle_update_published_checksum( 'https://github.com/neumanc/oogle-theme/releases/download/v1.9.9/oogle-theme.zip.sha256' ), 'oogle_update_checksum_http' ) );
 t( 'sidecar off github.com → refused without a request', $is_err( oogle_update_published_checksum( 'https://attacker.example/oogle-theme.zip.sha256' ), 'oogle_update_checksum_url' ) );
 
+echo "\n== Release signatures (oogle_update_parse_signature / oogle_update_verify_signature) ==\n";
+// Test vector: these exact bytes were signed with the maintainer's release key
+// (tools/sign-release.sh); the signature verifies only against the pinned key.
+$vec_bytes = "oogle-updater-test-package-bytes\n";
+$vec_sig   = 'dKv7vgBoDn/+ldsOiSUzmrFT7KLhRQPHMSvJrg13IvWH40WO0GicCXRvC8tBpYpMkC5ljl7kyqH1T8Rvco7cAQ==';
+$sig_file  = fn( string $b64, string $keyid = 'dc56680030516262' ) => "oogle-release-signature: 1\nalgorithm: ed25519\nkey-id: $keyid\nsigned-file: oogle-theme.zip\nsignature: $b64\n";
+$keys      = oogle_update_signing_keys();
+t( 'exactly one pinned key, 32 bytes, id dc56680030516262', 1 === count( $keys ) && isset( $keys['dc56680030516262'] ) && 32 === strlen( (string) base64_decode( $keys['dc56680030516262'], true ) ) );
+$pem = get_template_directory() . '/tools/release-signing.pub';
+if ( is_readable( $pem ) ) {
+	$der = base64_decode( preg_replace( '/-----[^-]+-----|\s/', '', (string) file_get_contents( $pem ) ), true );
+	t( 'pinned key is the committed tools/release-signing.pub', is_string( $der ) && 44 === strlen( $der ) && base64_encode( substr( $der, -32 ) ) === $keys['dc56680030516262'] );
+}
+$parsed = oogle_update_parse_signature( $sig_file( $vec_sig ) );
+t( 'well-formed .sig parses (64 raw bytes, key id)', is_array( $parsed ) && 64 === strlen( $parsed['signature'] ) && 'dc56680030516262' === $parsed['key_id'] );
+t( 'CRLF .sig parses', is_array( oogle_update_parse_signature( str_replace( "\n", "\r\n", $sig_file( $vec_sig ) ) ) ) );
+t( 'unknown lines are ignored, first signature line wins', is_array( $p2 = oogle_update_parse_signature( "comment: x\n" . $sig_file( $vec_sig ) . 'signature: ' . base64_encode( str_repeat( 'z', 64 ) ) . "\n" ) ) && $p2['signature'] === $parsed['signature'] );
+t( 'malformed .sig (no signature line) → error', $is_err( oogle_update_parse_signature( "key-id: dc56680030516262\n" ), 'oogle_update_signature_malformed' ) );
+t( 'malformed .sig (not base64) → error', $is_err( oogle_update_parse_signature( $sig_file( str_repeat( '!', 88 ) ) ), 'oogle_update_signature_malformed' ) );
+t( 'malformed .sig (wrong length) → error', $is_err( oogle_update_parse_signature( $sig_file( base64_encode( str_repeat( 'a', 32 ) ) ) ), 'oogle_update_signature_malformed' ) );
+t( 'HTML instead of a .sig → error', $is_err( oogle_update_parse_signature( '<html>Not Found</html>' ), 'oogle_update_signature_malformed' ) );
+$vec_file = wp_tempnam( 'oogle-vec' );
+file_put_contents( $vec_file, $vec_bytes );
+t( 'real signature over the test vector verifies against the PINNED key', true === oogle_update_verify_signature( $vec_file, $parsed ) );
+file_put_contents( $vec_file, $vec_bytes . 'x' );
+t( 'one extra byte → signature invalid', $is_err( oogle_update_verify_signature( $vec_file, $parsed ), 'oogle_update_signature_invalid' ) );
+file_put_contents( $vec_file, $vec_bytes );
+$flipped = $parsed; $flipped['signature'][10] = chr( ord( $flipped['signature'][10] ) ^ 1 );
+t( 'one flipped signature bit → invalid', $is_err( oogle_update_verify_signature( $vec_file, $flipped ), 'oogle_update_signature_invalid' ) );
+$eph = sodium_crypto_sign_keypair();
+$eph_pub = base64_encode( sodium_crypto_sign_publickey( $eph ) );
+$eph_sig = array( 'key_id' => 'ephemeral0000000', 'signature' => sodium_crypto_sign_detached( $vec_bytes, sodium_crypto_sign_secretkey( $eph ) ) );
+t( 'signature by an UNPINNED key (attacker-generated) → invalid', $is_err( oogle_update_verify_signature( $vec_file, $eph_sig ), 'oogle_update_signature_invalid' ) );
+t( 'same signature verifies when its key is in the trusted set (rotation path works)', true === oogle_update_verify_signature( $vec_file, $eph_sig, array( 'new' => $eph_pub ) ) );
+t( 'any one of several trusted keys suffices', true === oogle_update_verify_signature( $vec_file, $eph_sig, array( 'old' => $keys['dc56680030516262'], 'new' => $eph_pub ) ) );
+t( 'empty trusted set → invalid', $is_err( oogle_update_verify_signature( $vec_file, $eph_sig, array() ), 'oogle_update_signature_invalid' ) );
+t( 'garbage key material in the set is skipped, not fatal', $is_err( oogle_update_verify_signature( $vec_file, $eph_sig, array( 'bad' => 'not-base64!', 'short' => base64_encode( 'abc' ) ) ), 'oogle_update_signature_invalid' ) );
+file_put_contents( $vec_file, '' );
+t( 'empty package file → unreadable, not verified', $is_err( oogle_update_verify_signature( $vec_file, $parsed ), 'oogle_update_package_unreadable' ) );
+@unlink( $vec_file );
+$mock = fn() => $ok200( $sig_file( $vec_sig ) );
+$log  = array();
+$got = oogle_update_published_signature( 'https://github.com/neumanc/oogle-theme/releases/download/v1.9.9/oogle-theme.zip.sig' );
+t( 'published .sig fetched and parsed; no Authorization', is_array( $got ) && 64 === strlen( $got['signature'] ) && false === $log[0]['auth'] );
+t( '.sig off github.com → refused without a request', $is_err( oogle_update_published_signature( 'https://attacker.example/oogle-theme.zip.sig' ), 'oogle_update_signature_url' ) );
+$mock = fn() => $code( 404 );
+t( '.sig 404 → error', $is_err( oogle_update_published_signature( 'https://github.com/neumanc/oogle-theme/releases/download/v1.9.9/oogle-theme.zip.sig' ), 'oogle_update_signature_http' ) );
+
 echo "\n== Download guard (upgrader_pre_download) ==\n";
 $key = 'oogle_update_' . md5( 'neumanc/oogle-theme|' . get_template() );
 $tmp_zip = wp_tempnam( 'oogle-theme.zip' );
-file_put_contents( $tmp_zip, 'zip-bytes-' . wp_generate_password( 8, false ) );
+file_put_contents( $tmp_zip, $vec_bytes ); // the signed test vector stands in for the package
 $good_sha = hash_file( 'sha256', $tmp_zip );
 $package  = 'https://github.com/neumanc/oogle-theme/releases/download/v1.9.9/oogle-theme.zip';
 $sidecar  = $package . '.sha256';
-set_site_transient( $key, array( 'version' => '1.9.9', 'url' => '', 'package' => $package, 'checksum' => $sidecar, 'requires' => '7.0', 'requires_php' => '8.4' ), HOUR_IN_SECONDS );
-$serve = function ( string $digest ) use ( &$mock, $ok200, $tmp_zip, $package, $sidecar, $code ) {
-	$mock = function ( $url, $args ) use ( $digest, $ok200, $tmp_zip, $package, $sidecar, $code ) {
+$sigurl   = $package . '.sig';
+$good_sig = $sig_file( $vec_sig );
+set_site_transient( $key, array( 'version' => '1.9.9', 'url' => '', 'package' => $package, 'checksum' => $sidecar, 'signature' => $sigurl, 'requires' => '7.0', 'requires_php' => '8.4' ), HOUR_IN_SECONDS );
+$serve = function ( string $digest, ?string $sig_body = null ) use ( &$mock, $ok200, $tmp_zip, $package, $sidecar, $sigurl, $code, $good_sig ) {
+	$sig_body ??= $good_sig;
+	$mock = function ( $url, $args ) use ( $digest, $sig_body, $ok200, $tmp_zip, $package, $sidecar, $sigurl, $code ) {
 		if ( $url === $sidecar ) {
 			return $ok200( "$digest  oogle-theme.zip\n" );
+		}
+		if ( $url === $sigurl ) {
+			return null === $sig_body ? $code( 404 ) : $ok200( $sig_body );
 		}
 		if ( $url === $package ) {
 			if ( ! empty( $args['stream'] ) && ! empty( $args['filename'] ) ) {
@@ -427,6 +525,22 @@ if ( is_string( $got ) ) { @unlink( $got ); }
 $serve( str_repeat( '00', 32 ) );
 $got = oogle_update_pre_download( false, $package, $upgrader, array( 'theme' => get_template() ) );
 t( 'checksum mismatch → WP_Error, temp file removed', $is_err( $got, 'oogle_update_checksum_mismatch' ) );
+$serve( $good_sha, $sig_file( base64_encode( $eph_sig['signature'] ), 'ephemeral0000000' ) );
+$got = oogle_update_pre_download( false, $package, $upgrader, array( 'theme' => get_template() ) );
+t( 'checksum matches but signature by an unpinned key → refused (oogle_update_signature_invalid)', $is_err( $got, 'oogle_update_signature_invalid' ) );
+$serve( $good_sha, '<html>Not Found</html>' );
+$got = oogle_update_pre_download( false, $package, $upgrader, array( 'theme' => get_template() ) );
+t( 'malformed .sig at install time → refused before download', $is_err( $got, 'oogle_update_signature_malformed' ) );
+$serve( $good_sha, '' );
+$mock_keep = $mock;
+$mock = function ( $url, $args ) use ( $mock_keep, $sigurl, $code ) { return $url === $sigurl ? $code( 404 ) : $mock_keep( $url, $args ); };
+$got = oogle_update_pre_download( false, $package, $upgrader, array( 'theme' => get_template() ) );
+t( '.sig unavailable at install time → refused (fail closed)', $is_err( $got, 'oogle_update_signature_http' ) );
+$serve( $good_sha );
+set_site_transient( $key, array( 'version' => '1.9.9', 'url' => '', 'package' => $package, 'checksum' => $sidecar, 'requires' => '7.0', 'requires_php' => '8.4' ), HOUR_IN_SECONDS );
+$got = oogle_update_pre_download( false, $package, $upgrader, array( 'theme' => get_template() ) );
+t( 'release cached by an older updater (no signature URL) → refused and cache flushed', $is_err( $got, 'oogle_update_signature_missing' ) && false === get_site_transient( $key ) );
+set_site_transient( $key, array( 'version' => '1.9.9', 'url' => '', 'package' => $package, 'checksum' => $sidecar, 'signature' => $sigurl, 'requires' => '7.0', 'requires_php' => '8.4' ), HOUR_IN_SECONDS );
 $serve( $good_sha );
 $got = oogle_update_pre_download( false, 'https://github.com/neumanc/oogle-theme/releases/download/v1.9.9/other.zip', $upgrader, array( 'theme' => get_template() ) );
 t( 'package differs from the validated release → refused before download', $is_err( $got, 'oogle_update_package_unknown' ) );
@@ -521,17 +635,36 @@ t( 'theme.json missing → rejected', $is_err( $check( array(), array( 'theme.js
 t( 'theme.json invalid JSON → rejected', $is_err( $check( array(), array( 'theme.json' => '{not json' ) ), 'oogle_update_package_theme_json' ) );
 t( 'theme.json without version/settings → rejected', $is_err( $check( array(), array( 'theme.json' => '{"styles":{}}' ) ), 'oogle_update_package_theme_json' ) );
 t( 'real working-tree package at its own version → accepted', true === oogle_update_validate_package( get_template_directory(), (string) $installed_theme->get( 'Version' ) ) );
+$dir = $fixture();
+wp_mkdir_p( $dir . 'assets' );
+@symlink( '/etc/passwd', $dir . 'assets/evil' );
+$res = oogle_update_validate_package( $dir, $pkg_version );
+t( 'package containing a symbolic link → rejected', $is_err( $res, 'oogle_update_package_symlink' ) && str_contains( $res->get_error_message(), 'assets/evil' ), is_wp_error( $res ) ? $res->get_error_message() : 'accepted' );
+@unlink( $dir . 'assets/evil' ); @rmdir( $dir . 'assets' ); $rm( $dir );
+t( 'no symlink in the installed parent', '' === oogle_update_find_symlink( get_template_directory() ) );
 
 echo "\n== Source selection gate (upgrader_source_selection) ==\n";
 $upd = new Theme_Upgrader( new Automatic_Upgrader_Skin() );
-$sel = function ( string $dir, array $extra ) use ( $upd ) {
-	return oogle_update_source_selection( $dir, dirname( untrailingslashit( $dir ) ) . '/', $upd, $extra );
+$sel = function ( string $dir, array $extra, ?Theme_Upgrader $with = null ) use ( $upd ) {
+	$upd = $with ?? $upd;
+	// Core hands the gate the extracted folder and its working directory (wp-content/upgrade/<random>/);
+	// the fixture is moved into a working directory of its own so that the cleanup can be observed.
+	$work = trailingslashit( get_temp_dir() ) . 'oogle-work-' . wp_generate_password( 8, false ) . '/';
+	wp_mkdir_p( $work );
+	rename( untrailingslashit( $dir ), $work . 'oogle-theme-pkg' );
+	$res = oogle_update_source_selection( $work . 'oogle-theme-pkg/', $work, $upd, $extra );
+	if ( is_dir( $work . 'oogle-theme-pkg' ) ) {
+		rename( $work . 'oogle-theme-pkg', untrailingslashit( $dir ) ); // put it back for $rm()
+		@rmdir( $work );
+	}
+	return is_string( $res ) && str_starts_with( $res, $work ) ? str_replace( $work . 'oogle-theme-pkg', untrailingslashit( $dir ), $res ) : $res;
 };
 set_site_transient( 'update_themes', (object) array( 'response' => array( get_template() => array( 'new_version' => '1.0.1', 'package' => 'x' ) ) ) );
 $dir = $fixture( array( 'Theme Name' => 'Evil' ) );
 $res = $sel( $dir, array( 'theme' => get_template() ) );
-$rm( $dir );
 t( 'own upgrade with a wrong package → WP_Error stops the upgrader', $is_err( $res, 'oogle_update_package_identity' ) );
+t( 'rejected package: the extracted files and the working directory are removed', ! is_dir( $dir ) && array() === glob( trailingslashit( get_temp_dir() ) . 'oogle-work-*' ), is_dir( $dir ) ? 'still there' : 'gone' );
+$rm( $dir );
 $dir = $fixture();
 $res = $sel( $dir, array( 'theme' => 'some-other-theme' ) );
 $rm( $dir );
@@ -556,7 +689,7 @@ $bulk       = new Theme_Upgrader( new Automatic_Upgrader_Skin() );
 $bulk->bulk = true;
 $bulk->maintenance_mode( true ); // what Theme_Upgrader::bulk_upgrade() does for the batch
 $dir = $fixture( array( 'Theme Name' => 'Evil' ) );
-$res = oogle_update_source_selection( $dir, dirname( untrailingslashit( $dir ) ) . '/', $bulk, array( 'theme' => get_template() ) );
+$res = $sel( $dir, array( 'theme' => get_template() ), $bulk );
 $rm( $dir );
 t( 'bulk run: rejected package leaves maintenance mode to core (it ends it after the whole batch)', is_wp_error( $res ) && file_exists( ABSPATH . '.maintenance' ) );
 $bulk->maintenance_mode( false );
@@ -578,6 +711,7 @@ $valid     = array(
 	'url'          => 'https://github.com/neumanc/oogle-theme/releases/tag/v1.99.0',
 	'package'      => 'https://github.com/neumanc/oogle-theme/releases/download/v1.99.0/oogle-theme.zip',
 	'checksum'     => 'https://github.com/neumanc/oogle-theme/releases/download/v1.99.0/oogle-theme.zip.sha256',
+	'signature'    => 'https://github.com/neumanc/oogle-theme/releases/download/v1.99.0/oogle-theme.zip.sig',
 	'requires'     => '7.0',
 	'requires_php' => '8.4',
 );
