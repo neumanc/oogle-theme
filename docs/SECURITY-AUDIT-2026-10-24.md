@@ -256,7 +256,7 @@ shared.
 | Browser regression (Playwright: Chromium, WebKit, Firefox; desktop and mobile; axe on `/` and the fixture page) | 261 passed, 0 failed |
 | End-to-end upgrade (`tests/e2e/run.sh`, signed mode): 1.1.0 → 1.2.0 bulk/single/CLI; tampered refused; 1.2.0 → 1.2.1 unsigned not offered, unknown key refused (bulk, single), downgrade not offered, signed bulk/single/CLI; tampered and missing-`theme.json` refused; `debug.log` empty | 14 scenarios pass |
 | Child-theme compatibility | No public API changed; the fixture child passes in both configurations; the six client children use only `oogle/editor/allowed_blocks`, pattern overrides by slug and `oogle/images/avif`, all unchanged |
-| Updater compatibility | 1.0.0 sites (Latest-release updater) and 1.1.0 sites install 1.2.0 with their installed code (verified end to end for 1.1.0 → 1.2.0; 1.0.0 ignores extra assets likewise); 1.2.0 sites require the `.sig` from then on |
+| Updater compatibility | 1.0.0 sites (the original `/releases/latest` updater) and 1.1.0 sites both install 1.2.0 with their installed code — each verified live against the published release (§4); 1.2.0 sites require the `.sig` from then on |
 | Known limitations | A release the maintainer has not yet signed is invisible to 1.2.0+ sites until the `.sig` is attached (fail closed, one-hour cache). Loss of the signing key requires one manual upload per site (SECURITY.md). Hosts without `ext-sodium` use WordPress's bundled `sodium_compat` polyfill (slower, same result). |
 
 ## 4. Release
@@ -280,8 +280,10 @@ fixture child active).**
 | A real 1.1.0 parent (the published v1.1.0 asset) discovers 1.2.0 through core's update check from live GitHub; package URL is the canonical release asset | pass |
 | `wp theme update oogle-theme` on that site: parent 1.1.0 → 1.2.0, "Updated 1 of 1 themes"; child files byte-identical; child still active; theme mods unchanged; maintenance mode off | pass |
 | The installed 1.2.0 (65 files) is byte-identical to the published asset | pass |
+| A real 1.0.0 parent (the published v1.0.0 asset; its updater reads `/releases/latest` and has no checksum or package gate) with the fixture child active: discovers 1.2.0 from live GitHub, `wp theme update` 1.0.0 → 1.2.0, child files byte-identical, child active, theme mods unchanged, maintenance mode off, installed tree byte-identical to the asset | pass |
 | The installed 1.2.0 updater discovers its own release (filed under `no_update`, as core does for the current version), caches the `.sha256` and `.sig` URLs, and its download gate downloads the live asset, matches the SHA-256 and verifies the live Ed25519 signature against the pinned key | pass |
-| `debug.log` after both | empty |
+| `debug.log` after the 1.1.0 and 1.2.0 checks | empty |
+| `debug.log` after the 1.0.0 check | only `PHP Deprecated` notices from WP-CLI's bundled Symfony Finder (`phar:///usr/local/bin/wp/vendor/symfony/finder/…`) on PHP 8.4, emitted by `wp theme update` itself when it reads its download cache; nothing from WordPress or the theme |
 
 ## 5. Deployment recommendation
 
